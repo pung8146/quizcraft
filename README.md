@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📘 Markdown Quiz
 
-## Getting Started
+**Markdown 문서를 기반으로 학습용 퀴즈를 자동 생성하는 도구입니다.**  
+마크다운 문서를 붙여넣기만 하면, 특정 조건에 따라 텍스트가 공란 처리되어 사용자에게 문제 형태로 제공됩니다.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## ✨ 주요 기능
+
+### 📝 마크다운 문서 입력
+
+- 사용자가 작성한 `.md` 형식의 문서를 에디터에 붙여넣을 수 있습니다.
+- 마크다운 문서는 **브라우저 LocalStorage**에 저장됩니다.
+
+### 📚 변환된 문서 목록 확인
+
+- 저장된 문서는 변환 목록에서 쉽게 확인하고 다시 불러올 수 있습니다.
+
+### 🧠 자동 퀴즈 변환
+
+- 문서 내 **특정 조건에 따라 텍스트가 공란으로 변환**되어 문제로 제공됩니다.
+- 사용자는 공란에 직접 답을 입력할 수 있으며, 정답 확인 기능도 지원됩니다.
+
+---
+
+## ⚙️ 문제 변환 조건 예시
+
+- `#`, `##`, `###` 등 특정 **헤더(H 태그)** 이하 내용만 퀴즈화 가능
+- 코드 블록 내 일정 부분을 **랜덤 공란 처리**
+- 기타 규칙 기반 또는 AI 기반 처리(확장 가능)
+
+---
+
+## 💾 문서 저장 & 불러오기
+
+- 사용자가 변환한 퀴즈 문서는 **로컬(LocalStorage)** 에 자동 저장됩니다.
+- 필요 시 언제든지 불러와 이어서 풀 수 있습니다.
+
+---
+
+## 🛠️ 기술 스택
+
+- Framework: **Next.js + TypeScript**
+- Styling: **Tailwind CSS**
+- State: `useState`, `useEffect`, `localStorage` 기반 (향후 React Query 등 도입 가능)
+- Parsing: `remark`, `gray-matter` 등 마크다운 파서 (예정)
+
+---
+
+## 🚧 개발 예정 기능
+
+- ✅ 마크다운 문서 붙여넣기 및 저장
+- ✅ 공란 문제 생성 및 풀이
+- ⏳ 정답 자동 채점
+- ⏳ 사용자별 결과 저장 (향후 로그인 도입 시)
+- ⏳ AI 기반 자동 퀴즈 생성 (OpenAI 연동 가능성)
+
+---
+
+## 📌 사용 목적
+
+- 마크다운으로 정리한 학습 자료를 반복 학습용 문제로 활용
+- 블로그 글, 강의 노트, 기술 문서 등을 **인터랙티브한 퀴즈 형태로 재사용**
+
+---
+
+## 📄 예시
+
+```markdown
+### 자바스크립트의 데이터 타입
+
+자바스크립트에는 원시 타입과 참조 타입이 존재합니다.
+
+- 원시 타입: string, number, boolean, null, undefined, symbol, bigint
+- 참조 타입: object, array, function 등
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
