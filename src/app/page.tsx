@@ -51,31 +51,36 @@ export default function HomePage() {
   };
 
   return (
-    <main className="max-w-3xl mx-auto py-12 px-4">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-4">📘 Markdown Quiz 생성기</h1>
-        <p className="text-gray-600">
-          마크다운 문서를 붙여넣으면 자동으로 퀴즈를 생성해드립니다.
-        </p>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto py-6 sm:py-8 lg:py-12">
+        {/* 헤더 섹션 */}
+        <div className="text-center mb-8 sm:mb-10 lg:mb-12">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-gray-900">
+            📘 Markdown Quiz 생성기
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
+            마크다운 문서를 붙여넣으면 자동으로 퀴즈를 생성해드립니다.
+          </p>
+        </div>
 
-      {/* 샘플 문서 선택기 */}
-      <SampleMarkdownSelector
-        onSelectSample={handleSelectSample}
-        className="mb-6"
-      />
+        {/* 샘플 문서 선택기 */}
+        <SampleMarkdownSelector
+          onSelectSample={handleSelectSample}
+          className="mb-6 sm:mb-8"
+        />
 
-      <div className="bg-white rounded-lg border shadow-sm p-6">
-        <label
-          htmlFor="markdown-input"
-          className="block text-sm font-medium text-gray-700 mb-2"
-        >
-          마크다운 문서
-        </label>
-        <textarea
-          id="markdown-input"
-          className="w-full h-64 border rounded-md p-4 text-sm font-mono resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-          placeholder="# 제목
+        {/* 마크다운 입력 섹션 */}
+        <div className="bg-white rounded-lg border shadow-sm p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
+          <label
+            htmlFor="markdown-input"
+            className="block text-sm font-medium text-gray-700 mb-3 sm:mb-4"
+          >
+            마크다운 문서
+          </label>
+          <textarea
+            id="markdown-input"
+            className="w-full h-48 sm:h-64 lg:h-72 border rounded-md p-3 sm:p-4 text-sm font-mono resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            placeholder="# 제목
 
 ## 섹션 1
 
@@ -86,46 +91,51 @@ export default function HomePage() {
 더 많은 내용...
 
 또는 위의 샘플 문서 중 하나를 선택해보세요!"
-          value={markdown}
-          onChange={(e) => setMarkdown(e.target.value)}
-          tabIndex={0}
-          aria-label="마크다운 문서 입력"
-        />
-
-        <div className="flex justify-between items-center mt-6">
-          <div className="text-sm text-gray-500">
-            {markdown.length > 0
-              ? `${markdown.length}자 입력됨`
-              : "문서를 입력하거나 샘플을 선택해주세요"}
-          </div>
-          <button
-            onClick={handleGenerateQuiz}
-            disabled={!markdown.trim()}
-            className={`px-6 py-2 rounded-md font-medium transition-colors ${
-              markdown.trim()
-                ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
+            value={markdown}
+            onChange={(e) => setMarkdown(e.target.value)}
             tabIndex={0}
-            aria-label="퀴즈 생성"
-          >
-            퀴즈 생성하기 →
-          </button>
+            aria-label="마크다운 문서 입력"
+          />
+
+          {/* 하단 정보 및 버튼 */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-4 sm:mt-6 space-y-4 sm:space-y-0">
+            <div className="text-sm text-gray-500 order-2 sm:order-1">
+              {markdown.length > 0
+                ? `${markdown.length}자 입력됨`
+                : "문서를 입력하거나 샘플을 선택해주세요"}
+            </div>
+            <button
+              onClick={handleGenerateQuiz}
+              disabled={!markdown.trim()}
+              className={`order-1 sm:order-2 w-full sm:w-auto px-6 py-3 sm:py-2 rounded-md font-medium transition-colors ${
+                markdown.trim()
+                  ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+              tabIndex={0}
+              aria-label="퀴즈 생성"
+            >
+              퀴즈 생성하기 →
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-        <h3 className="font-semibold text-blue-900 mb-2">💡 사용 팁</h3>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li>• 제목과 섹션을 명확히 구분해주세요 (# 제목, ## 섹션)</li>
-          <li>• 중요한 개념과 정의를 포함해주세요</li>
-          <li>• 생성된 퀴즈는 히스토리에서 다시 확인할 수 있습니다</li>
-          <li>• 위의 샘플 문서를 사용하여 바로 체험해보세요!</li>
-        </ul>
-      </div>
+        {/* 사용 팁 */}
+        <div className="bg-blue-50 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+          <h3 className="font-semibold text-blue-900 mb-3 text-base sm:text-lg">
+            💡 사용 팁
+          </h3>
+          <ul className="text-sm sm:text-base text-blue-800 space-y-2">
+            <li>• 제목과 섹션을 명확히 구분해주세요 (# 제목, ## 섹션)</li>
+            <li>• 중요한 개념과 정의를 포함해주세요</li>
+            <li>• 생성된 퀴즈는 히스토리에서 다시 확인할 수 있습니다</li>
+            <li>• 위의 샘플 문서를 사용하여 바로 체험해보세요!</li>
+          </ul>
+        </div>
 
-      {/* 개발자 도구 컴포넌트 추가 */}
-      <DemoDataControls className="mt-8" />
-    </main>
+        {/* 개발자 도구 */}
+        <DemoDataControls className="mt-6 sm:mt-8" />
+      </div>
+    </div>
   );
 }

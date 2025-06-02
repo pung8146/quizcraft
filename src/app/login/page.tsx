@@ -31,21 +31,26 @@ const LoginPage = () => {
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
       handleGoogleLogin();
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">로그인</h1>
-          <p className="text-gray-600">계정에 로그인하여 계속하세요</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-6 sm:p-8">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+            로그인
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600">
+            계정에 로그인하여 계속하세요
+          </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800 text-sm">{error}</p>
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800 text-sm sm:text-base">{error}</p>
           </div>
         )}
 
@@ -55,7 +60,7 @@ const LoginPage = () => {
           disabled={isLoading}
           tabIndex={0}
           aria-label="구글로 로그인"
-          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-lg px-6 py-3 text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-lg px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
@@ -66,6 +71,7 @@ const LoginPage = () => {
                 height="20"
                 viewBox="0 0 24 24"
                 aria-hidden="true"
+                className="flex-shrink-0"
               >
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -84,19 +90,25 @@ const LoginPage = () => {
                   fill="#EA4335"
                 />
               </svg>
-              구글로 로그인
+              <span>구글로 로그인</span>
             </>
           )}
         </button>
 
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-500">
+        <div className="mt-4 sm:mt-6 text-center">
+          <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
             계속 진행하시면{" "}
-            <a href="#" className="text-blue-600 hover:text-blue-500">
+            <a
+              href="#"
+              className="text-blue-600 hover:text-blue-500 hover:underline focus:underline focus:outline-none"
+            >
               이용약관
             </a>
             과{" "}
-            <a href="#" className="text-blue-600 hover:text-blue-500">
+            <a
+              href="#"
+              className="text-blue-600 hover:text-blue-500 hover:underline focus:underline focus:outline-none"
+            >
               개인정보처리방침
             </a>
             에 동의하는 것으로 간주됩니다.

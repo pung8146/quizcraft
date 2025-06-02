@@ -118,94 +118,107 @@ export default function HistoryPage() {
 
   if (isLoading) {
     return (
-      <main className="max-w-4xl mx-auto py-12 px-4">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">로딩 중...</div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto py-6 sm:py-8 lg:py-12">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-gray-500">로딩 중...</div>
+          </div>
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="max-w-4xl mx-auto py-12 px-4">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">📊 퀴즈 히스토리</h1>
-        {quizHistory.length > 0 && (
-          <button
-            onClick={handleDeleteAll}
-            className="px-4 py-2 text-sm bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
-            tabIndex={0}
-            aria-label="모든 히스토리 삭제"
-          >
-            전체 삭제
-          </button>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto py-6 sm:py-8 lg:py-12">
+        {/* 헤더 섹션 */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 sm:mb-10 space-y-4 sm:space-y-0">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
+            📊 퀴즈 히스토리
+          </h1>
+          {quizHistory.length > 0 && (
+            <button
+              onClick={handleDeleteAll}
+              className="w-full sm:w-auto px-4 py-2 text-sm bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              tabIndex={0}
+              aria-label="모든 히스토리 삭제"
+            >
+              전체 삭제
+            </button>
+          )}
+        </div>
+
+        {quizHistory.length === 0 ? (
+          /* 빈 상태 */
+          <div className="text-center py-16 sm:py-20">
+            <div className="text-6xl sm:text-7xl mb-4">📝</div>
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-600 mb-3">
+              아직 생성된 퀴즈가 없습니다
+            </h2>
+            <p className="text-sm sm:text-base text-gray-500 mb-6 sm:mb-8 max-w-md mx-auto">
+              마크다운 문서를 제출하여 첫 번째 퀴즈를 만들어보세요!
+            </p>
+            <button
+              onClick={() => router.push("/")}
+              className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              tabIndex={0}
+              aria-label="문서 제출 페이지로 이동"
+            >
+              문서 제출하기 →
+            </button>
+          </div>
+        ) : (
+          /* 퀴즈 목록 */
+          <div className="space-y-4 sm:space-y-6">
+            {quizHistory.map((quiz) => (
+              <div
+                key={quiz.id}
+                className="bg-white border rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 space-y-4 sm:space-y-0">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 break-words">
+                      {quiz.title}
+                    </h3>
+                    <div className="space-y-1 text-sm text-gray-500">
+                      <p>생성일: {formatDate(quiz.createdAt)}</p>
+                      <p className="font-mono text-xs">ID: {quiz.id}</p>
+                    </div>
+                  </div>
+
+                  {/* 액션 버튼들 */}
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:ml-4">
+                    <button
+                      onClick={() => handleViewQuiz(quiz.id)}
+                      className="w-full sm:w-auto px-4 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                      tabIndex={0}
+                      aria-label={`${quiz.title} 퀴즈 보기`}
+                    >
+                      퀴즈 보기
+                    </button>
+                    <button
+                      onClick={() => handleDeleteQuiz(quiz.id)}
+                      className="w-full sm:w-auto px-4 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                      tabIndex={0}
+                      aria-label={`${quiz.title} 퀴즈 삭제`}
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+
+                {/* 콘텐츠 미리보기 */}
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <p className="text-sm sm:text-base text-gray-600 line-clamp-3 break-words">
+                    {quiz.content.substring(0, 200)}
+                    {quiz.content.length > 200 && "..."}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
-
-      {quizHistory.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="text-6xl mb-4">📝</div>
-          <h2 className="text-xl font-semibold text-gray-600 mb-2">
-            아직 생성된 퀴즈가 없습니다
-          </h2>
-          <p className="text-gray-500 mb-6">
-            마크다운 문서를 제출하여 첫 번째 퀴즈를 만들어보세요!
-          </p>
-          <button
-            onClick={() => router.push("/")}
-            className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            tabIndex={0}
-            aria-label="문서 제출 페이지로 이동"
-          >
-            문서 제출하기 →
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {quizHistory.map((quiz) => (
-            <div
-              key={quiz.id}
-              className="bg-white border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {quiz.title}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    생성일: {formatDate(quiz.createdAt)}
-                  </p>
-                  <p className="text-sm text-gray-500">ID: {quiz.id}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleViewQuiz(quiz.id)}
-                    className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-                    tabIndex={0}
-                    aria-label={`${quiz.title} 퀴즈 보기`}
-                  >
-                    퀴즈 보기
-                  </button>
-                  <button
-                    onClick={() => handleDeleteQuiz(quiz.id)}
-                    className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-                    tabIndex={0}
-                    aria-label={`${quiz.title} 퀴즈 삭제`}
-                  >
-                    삭제
-                  </button>
-                </div>
-              </div>
-              <div className="bg-gray-50 rounded p-3">
-                <p className="text-sm text-gray-600 line-clamp-3">
-                  {quiz.content.substring(0, 200)}
-                  {quiz.content.length > 200 && "..."}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </main>
+    </div>
   );
 }

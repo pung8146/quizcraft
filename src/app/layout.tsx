@@ -8,9 +8,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
+      <body className="min-h-screen bg-gray-50">
         <Header />
-        <main className="p-4">{children}</main>
+        {children}
       </body>
     </html>
   );

@@ -46,20 +46,23 @@ export default function DemoDataControls({
 
   const handleKeyDown = (event: React.KeyboardEvent, action: () => void) => {
     if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
       action();
     }
   };
 
   return (
     <div
-      className={`bg-gray-50 border border-gray-200 rounded-lg p-4 ${className}`}
+      className={`bg-gray-50 border border-gray-200 rounded-lg p-4 sm:p-6 ${className}`}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">🛠️ 개발자 도구</h3>
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-800">
+          🛠️ 개발자 도구
+        </h3>
         <button
           onClick={handleToggleExpanded}
           onKeyDown={(e) => handleKeyDown(e, handleToggleExpanded)}
-          className="text-sm text-gray-600 hover:text-gray-800 transition-colors"
+          className="text-sm text-gray-600 hover:text-gray-800 transition-colors px-2 py-1 rounded hover:bg-gray-100"
           tabIndex={0}
           aria-label={isExpanded ? "도구 접기" : "도구 펼치기"}
         >
@@ -68,26 +71,24 @@ export default function DemoDataControls({
       </div>
 
       {isExpanded && (
-        <div className="space-y-4">
-          <div className="text-sm text-gray-600">
-            <p className="mb-2">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="text-sm sm:text-base text-gray-600">
+            <p className="mb-2 sm:mb-3">
               <strong>데모 데이터:</strong> {demoQuizzes.length}개의 샘플 퀴즈가
               준비되어 있습니다.
             </p>
-            <ul className="text-xs space-y-1 ml-4">
+            <ul className="text-xs sm:text-sm space-y-1 ml-4 text-gray-500">
               {demoQuizzes.map((quiz) => (
-                <li key={quiz.id} className="text-gray-500">
-                  • {quiz.title}
-                </li>
+                <li key={quiz.id}>• {quiz.title}</li>
               ))}
             </ul>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <button
               onClick={handleInitialize}
               onKeyDown={(e) => handleKeyDown(e, handleInitialize)}
-              className="px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+              className="w-full px-4 py-3 sm:py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
               tabIndex={0}
               aria-label="데모 데이터 초기화"
             >
@@ -97,7 +98,7 @@ export default function DemoDataControls({
             <button
               onClick={handleClear}
               onKeyDown={(e) => handleKeyDown(e, handleClear)}
-              className="px-3 py-2 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+              className="w-full px-4 py-3 sm:py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
               tabIndex={0}
               aria-label="데모 데이터 삭제"
             >
@@ -107,7 +108,7 @@ export default function DemoDataControls({
             <button
               onClick={handleReset}
               onKeyDown={(e) => handleKeyDown(e, handleReset)}
-              className="px-3 py-2 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+              className="w-full px-4 py-3 sm:py-2 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors focus:ring-2 focus:ring-green-500 focus:ring-offset-1"
               tabIndex={0}
               aria-label="데모 데이터 재설정"
             >
@@ -116,16 +117,16 @@ export default function DemoDataControls({
           </div>
 
           {message && (
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+            <div className="p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm sm:text-base text-yellow-800">
               {message}
             </div>
           )}
 
-          <div className="text-xs text-gray-500 pt-2 border-t border-gray-200">
-            <p>
+          <div className="text-xs sm:text-sm text-gray-500 pt-3 sm:pt-4 border-t border-gray-200">
+            <p className="font-medium mb-2">
               <strong>사용법:</strong>
             </p>
-            <ul className="mt-1 space-y-1 ml-2">
+            <ul className="space-y-1 ml-2 sm:ml-3">
               <li>
                 • <strong>초기화:</strong> 데모 데이터가 없을 때만 추가
               </li>
