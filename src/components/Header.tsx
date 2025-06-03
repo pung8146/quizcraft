@@ -103,24 +103,17 @@ export default function Header() {
                   </button>
                 </>
               ) : (
-                <>
+                <div className="flex items-center space-x-4">
+                  <span className="text-xs text-gray-500">🔓 게스트 모드</span>
                   <button
                     onClick={() => handleNavigation("/login")}
-                    className="text-sm text-gray-600 hover:text-blue-600 hover:underline transition-colors"
+                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                     tabIndex={0}
-                    aria-label="로그인 페이지로 이동"
+                    aria-label="구글로 로그인"
                   >
-                    로그인
+                    구글 로그인
                   </button>
-                  <button
-                    onClick={() => handleNavigation("/signup")}
-                    className="text-sm text-gray-600 hover:text-blue-600 hover:underline transition-colors"
-                    tabIndex={0}
-                    aria-label="회원가입 페이지로 이동"
-                  >
-                    회원가입
-                  </button>
-                </>
+                </div>
               )}
             </div>
           </nav>
@@ -210,22 +203,17 @@ export default function Header() {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-1">
+                <div className="space-y-3">
+                  <div className="px-3 py-2 text-sm text-gray-500">
+                    🔓 현재 게스트 모드로 이용 중
+                  </div>
                   <button
                     onClick={() => handleNavigation("/login")}
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50 w-full text-left transition-colors"
+                    className="mx-3 w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
                     tabIndex={0}
-                    aria-label="로그인 페이지로 이동"
+                    aria-label="구글로 로그인"
                   >
-                    로그인
-                  </button>
-                  <button
-                    onClick={() => handleNavigation("/signup")}
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50 w-full text-left transition-colors"
-                    tabIndex={0}
-                    aria-label="회원가입 페이지로 이동"
-                  >
-                    회원가입
+                    구글 로그인
                   </button>
                 </div>
               )}

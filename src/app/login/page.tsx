@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleGoogleLogin = async () => {
     try {
@@ -29,10 +31,14 @@ const LoginPage = () => {
     }
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
+  const handleGuestMode = () => {
+    router.push("/");
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent, action: () => void) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      handleGoogleLogin();
+      action();
     }
   };
 
@@ -41,10 +47,10 @@ const LoginPage = () => {
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-6 sm:p-8">
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            로그인
+            로그인 방식 선택
           </h1>
           <p className="text-sm sm:text-base text-gray-600">
-            계정에 로그인하여 계속하세요
+            구글 계정으로 로그인하거나 게스트 모드로 이용하세요
           </p>
         </div>
 
@@ -54,13 +60,14 @@ const LoginPage = () => {
           </div>
         )}
 
+        {/* 구글 로그인 */}
         <button
           onClick={handleGoogleLogin}
-          onKeyDown={handleKeyDown}
+          onKeyDown={(e) => handleKeyDown(e, handleGoogleLogin)}
           disabled={isLoading}
           tabIndex={0}
           aria-label="구글로 로그인"
-          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-lg px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-lg px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-4"
         >
           {isLoading ? (
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
@@ -95,7 +102,49 @@ const LoginPage = () => {
           )}
         </button>
 
-        <div className="mt-4 sm:mt-6 text-center">
+        {/* 구분선 */}
+        <div className="relative mb-4">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-xs sm:text-sm">
+            <span className="bg-white px-2 text-gray-500">또는</span>
+          </div>
+        </div>
+
+        {/* 게스트 모드 */}
+        <button
+          onClick={handleGuestMode}
+          onKeyDown={(e) => handleKeyDown(e, handleGuestMode)}
+          tabIndex={0}
+          aria-label="게스트 모드로 계속하기"
+          className="w-full flex items-center justify-center gap-3 bg-gray-100 border border-gray-300 rounded-lg px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-gray-700 font-medium hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+        >
+          <span className="text-lg">🔓</span>
+          <span>게스트 모드로 계속하기</span>
+        </button>
+
+        {/* 각 모드의 설명 */}
+        <div className="mt-6 space-y-3 text-xs sm:text-sm text-gray-500">
+          <div className="bg-blue-50 p-3 rounded-lg">
+            <h4 className="font-medium text-blue-900 mb-1">
+              ✅ 구글 로그인 시
+            </h4>
+            <p className="text-blue-800">
+              퀴즈 기록이 클라우드에 저장되어 어디서든 접근 가능
+            </p>
+          </div>
+          <div className="bg-gray-50 p-3 rounded-lg">
+            <h4 className="font-medium text-gray-900 mb-1">
+              🔓 게스트 모드 시
+            </h4>
+            <p className="text-gray-700">
+              로컬 저장소 사용, 브라우저에서만 데이터 유지
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 text-center">
           <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
             계속 진행하시면{" "}
             <a
