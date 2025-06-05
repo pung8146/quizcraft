@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
 import DemoDataControls from "@/components/DemoDataControls";
 import SampleMarkdownSelector from "@/components/SampleMarkdownSelector";
+import SharedDocsGallery from "@/components/SharedDocsGallery";
 import { initializeDemoData } from "@/lib/demoData";
 
 export default function HomePage() {
@@ -66,6 +67,12 @@ export default function HomePage() {
         {/* 샘플 문서 선택기 */}
         <SampleMarkdownSelector
           onSelectSample={handleSelectSample}
+          className="mb-6 sm:mb-8"
+        />
+
+        {/* 커뮤니티 문서 갤러리 */}
+        <SharedDocsGallery
+          onSelectDoc={handleSelectSample}
           className="mb-6 sm:mb-8"
         />
 
