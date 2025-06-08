@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { demoQuizzes } from "@/lib/demoData";
 import type { User } from "@supabase/supabase-js";
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isQuizDropdownOpen, setIsQuizDropdownOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -18,6 +20,23 @@ export default function Header() {
     });
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest(".quiz-dropdown")) {
+        setIsQuizDropdownOpen(false);
+      }
+    };
+
+    if (isQuizDropdownOpen) {
+      document.addEventListener("click", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [isQuizDropdownOpen]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setIsMobileMenuOpen(false);
@@ -26,10 +45,21 @@ export default function Header() {
   const handleNavigation = (path: string) => {
     router.push(path);
     setIsMobileMenuOpen(false);
+    setIsQuizDropdownOpen(false);
   };
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const toggleQuizDropdown = () => {
+    setIsQuizDropdownOpen(!isQuizDropdownOpen);
+  };
+
+  const selectQuizSample = (content: string) => {
+    // localStorage에 선택된 퀴즈 내용 저장
+    localStorage.setItem("selectedQuizContent", content);
+    handleNavigation("/");
   };
 
   const handleKeyDown = (event: React.KeyboardEvent, action: () => void) => {
@@ -71,6 +101,57 @@ export default function Header() {
               >
                 📝 문서 제출
               </button>
+
+              {/* 문제목록 드롭다운 */}
+              <div className="relative quiz-dropdown">
+                <button
+                  onClick={toggleQuizDropdown}
+                  className="px-3 py-2 rounded-md transition-colors text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50 flex items-center"
+                  tabIndex={0}
+                  aria-label="문제목록"
+                  aria-haspopup="true"
+                  aria-expanded={isQuizDropdownOpen}
+                >
+                  📚 문제목록
+                  <svg
+                    className={`ml-1 h-4 w-4 transition-transform ${
+                      isQuizDropdownOpen ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                {/* 드롭다운 메뉴 */}
+                {isQuizDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                    <div className="py-1">
+                      <div className="px-3 py-2 text-xs font-medium text-gray-500 bg-gray-50">
+                        샘플 퀴즈
+                      </div>
+                      {demoQuizzes.map((quiz) => (
+                        <button
+                          key={quiz.id}
+                          onClick={() => selectQuizSample(quiz.content)}
+                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          tabIndex={0}
+                          aria-label={`${quiz.title} 선택`}
+                        >
+                          {quiz.title}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <button
                 onClick={() => handleNavigation("/history")}
@@ -172,6 +253,24 @@ export default function Header() {
             >
               📝 문서 제출
             </button>
+
+            {/* 모바일 문제목록 */}
+            <div className="space-y-1">
+              <div className="px-3 py-2 text-sm font-medium text-gray-500">
+                📚 문제목록
+              </div>
+              {demoQuizzes.map((quiz) => (
+                <button
+                  key={quiz.id}
+                  onClick={() => selectQuizSample(quiz.content)}
+                  className="block px-6 py-2 rounded-md text-sm font-medium w-full text-left transition-colors text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+                  tabIndex={0}
+                  aria-label={`${quiz.title} 선택`}
+                >
+                  {quiz.title}
+                </button>
+              ))}
+            </div>
 
             <button
               onClick={() => handleNavigation("/history")}

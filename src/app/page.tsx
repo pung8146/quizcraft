@@ -12,9 +12,17 @@ export default function HomePage() {
   const [markdown, setMarkdown] = useState("");
   const router = useRouter();
 
-  // 페이지 로드 시 데모 데이터 자동 초기화
+  // 페이지 로드 시 데모 데이터 자동 초기화 및 헤더에서 선택된 퀴즈 로드
   useEffect(() => {
     initializeDemoData();
+
+    // 헤더에서 선택된 퀴즈 내용 확인
+    const selectedContent = localStorage.getItem("selectedQuizContent");
+    if (selectedContent) {
+      setMarkdown(selectedContent);
+      // 사용 후 제거
+      localStorage.removeItem("selectedQuizContent");
+    }
   }, []);
 
   const handleGenerateQuiz = () => {
