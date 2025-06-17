@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
 import DemoDataControls from "@/components/DemoDataControls";
-import SampleMarkdownSelector from "@/components/SampleMarkdownSelector";
-import SharedDocsGallery from "@/components/SharedDocsGallery";
 import { initializeDemoData } from "@/lib/demoData";
 
 export default function HomePage() {
@@ -46,10 +44,6 @@ export default function HomePage() {
     router.push(`/quiz/${slug}`); // 퀴즈 페이지로 이동
   };
 
-  const handleSelectSample = (content: string) => {
-    setMarkdown(content);
-  };
-
   const extractTitle = (content: string): string => {
     const lines = content.split("\n");
     const titleLine = lines.find((line) => line.startsWith("# "));
@@ -72,18 +66,6 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* 샘플 문서 선택기 */}
-        <SampleMarkdownSelector
-          onSelectSample={handleSelectSample}
-          className="mb-6 sm:mb-8"
-        />
-
-        {/* 커뮤니티 문서 갤러리 */}
-        <SharedDocsGallery
-          onSelectDoc={handleSelectSample}
-          className="mb-6 sm:mb-8"
-        />
-
         {/* 마크다운 입력 섹션 */}
         <div className="bg-white rounded-lg border shadow-sm p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
           <label
@@ -103,9 +85,7 @@ export default function HomePage() {
 
 ## 섹션 2
 
-더 많은 내용...
-
-또는 위의 샘플 문서 중 하나를 선택해보세요!"
+더 많은 내용..."
             value={markdown}
             onChange={(e) => setMarkdown(e.target.value)}
             tabIndex={0}
@@ -117,7 +97,7 @@ export default function HomePage() {
             <div className="text-sm text-gray-500 order-2 sm:order-1">
               {markdown.length > 0
                 ? `${markdown.length}자 입력됨`
-                : "문서를 입력하거나 샘플을 선택해주세요"}
+                : "문서를 입력해주세요"}
             </div>
             <button
               onClick={handleGenerateQuiz}
@@ -144,7 +124,6 @@ export default function HomePage() {
             <li>• 제목과 섹션을 명확히 구분해주세요 (# 제목, ## 섹션)</li>
             <li>• 중요한 개념과 정의를 포함해주세요</li>
             <li>• 생성된 퀴즈는 히스토리에서 다시 확인할 수 있습니다</li>
-            <li>• 위의 샘플 문서를 사용하여 바로 체험해보세요!</li>
           </ul>
         </div>
 
