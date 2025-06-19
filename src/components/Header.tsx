@@ -1,10 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import { demoQuizzes } from "@/lib/demoData";
-import type { User } from "@supabase/supabase-js";
+import { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import { demoQuizzes } from '@/lib/demoData';
+import type { User } from '@supabase/supabase-js';
+import { useAuth } from './AuthProvider';
+import Link from 'next/link';
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);
@@ -12,6 +14,7 @@ export default function Header() {
   const [isQuizDropdownOpen, setIsQuizDropdownOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { signOut } = useAuth();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
@@ -23,23 +26,26 @@ export default function Header() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
-      if (!target.closest(".quiz-dropdown")) {
+      if (!target.closest('.quiz-dropdown')) {
         setIsQuizDropdownOpen(false);
       }
     };
 
     if (isQuizDropdownOpen) {
-      document.addEventListener("click", handleClickOutside);
+      document.addEventListener('click', handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener('click', handleClickOutside);
     };
   }, [isQuizDropdownOpen]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setIsMobileMenuOpen(false);
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('로그아웃 오류:', error);
+    }
   };
 
   const handleNavigation = (path: string) => {
@@ -58,12 +64,12 @@ export default function Header() {
 
   const selectQuizSample = (content: string) => {
     // localStorage에 선택된 퀴즈 내용 저장
-    localStorage.setItem("selectedQuizContent", content);
-    handleNavigation("/");
+    localStorage.setItem('selectedQuizContent', content);
+    handleNavigation('/');
   };
 
   const handleKeyDown = (event: React.KeyboardEvent, action: () => void) => {
-    if (event.key === "Enter" || event.key === " ") {
+    if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       action();
     }
@@ -75,47 +81,35 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           {/* 로고 */}
           <div className="flex-shrink-0">
-            <h1
-              className="text-lg sm:text-xl font-bold cursor-pointer hover:text-blue-600 transition-colors"
-              onClick={() => handleNavigation("/")}
-              tabIndex={0}
-              aria-label="홈으로 이동"
-              onKeyDown={(e) => handleKeyDown(e, () => handleNavigation("/"))}
-            >
-              📘 MarkdownQuiz
-            </h1>
+            <Link href="/" className="text-xl font-bold text-gray-900">
+              QuizCraft
+            </Link>
           </div>
 
           {/* 데스크톱 네비게이션 */}
           <nav className="hidden md:flex items-center space-x-8">
             <div className="flex items-center space-x-6">
-              <button
-                onClick={() => handleNavigation("/")}
+              <Link
+                href="/"
                 className={`px-3 py-2 rounded-md transition-colors text-sm font-medium ${
-                  pathname === "/"
-                    ? "bg-blue-100 text-blue-700"
-                    : "text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+                  pathname === '/'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
                 }`}
-                tabIndex={0}
-                aria-label="마크다운 제출 페이지"
               >
-                📝 문서 제출
-              </button>
+                홈
+              </Link>
 
               {/* 문제목록 드롭다운 */}
               <div className="relative quiz-dropdown">
-                <button
-                  onClick={toggleQuizDropdown}
+                <Link
+                  href="/quizzes"
                   className="px-3 py-2 rounded-md transition-colors text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50 flex items-center"
-                  tabIndex={0}
-                  aria-label="문제목록"
-                  aria-haspopup="true"
-                  aria-expanded={isQuizDropdownOpen}
                 >
-                  📚 문제목록
+                  문제목록
                   <svg
                     className={`ml-1 h-4 w-4 transition-transform ${
-                      isQuizDropdownOpen ? "rotate-180" : ""
+                      isQuizDropdownOpen ? 'rotate-180' : ''
                     }`}
                     fill="none"
                     stroke="currentColor"
@@ -128,7 +122,7 @@ export default function Header() {
                       d="M19 9l-7 7-7-7"
                     />
                   </svg>
-                </button>
+                </Link>
 
                 {/* 드롭다운 메뉴 */}
                 {isQuizDropdownOpen && (
@@ -138,63 +132,61 @@ export default function Header() {
                         샘플 퀴즈
                       </div>
                       {demoQuizzes.map((quiz) => (
-                        <button
+                        <Link
                           key={quiz.id}
-                          onClick={() => selectQuizSample(quiz.content)}
+                          href={`/quizzes/${quiz.id}`}
                           className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                          tabIndex={0}
-                          aria-label={`${quiz.title} 선택`}
                         >
                           {quiz.title}
-                        </button>
+                        </Link>
                       ))}
                     </div>
                   </div>
                 )}
               </div>
 
-              <button
-                onClick={() => handleNavigation("/history")}
+              <Link
+                href="/history"
                 className={`px-3 py-2 rounded-md transition-colors text-sm font-medium ${
-                  pathname === "/history"
-                    ? "bg-blue-100 text-blue-700"
-                    : "text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+                  pathname === '/history'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
                 }`}
-                tabIndex={0}
-                aria-label="제출 히스토리 페이지"
               >
-                📊 히스토리
-              </button>
+                히스토리
+              </Link>
             </div>
 
             {/* 데스크톱 사용자 메뉴 */}
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
-                  <span className="text-sm text-gray-600 hidden lg:block">
-                    👤 {user.email}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    {user.user_metadata?.avatar_url && (
+                      <img
+                        src={user.user_metadata.avatar_url}
+                        alt="프로필"
+                        className="w-8 h-8 rounded-full"
+                      />
+                    )}
+                    <span className="text-sm text-gray-700">
+                      {user.user_metadata?.name || user.email}
+                    </span>
+                  </div>
                   <button
                     onClick={handleLogout}
-                    className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
-                    tabIndex={0}
-                    aria-label="로그아웃"
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                   >
                     로그아웃
                   </button>
                 </>
               ) : (
-                <div className="flex items-center space-x-4">
-                  <span className="text-xs text-gray-500">🔓 게스트 모드</span>
-                  <button
-                    onClick={() => handleNavigation("/login")}
-                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                    tabIndex={0}
-                    aria-label="구글로 로그인"
-                  >
-                    구글 로그인
-                  </button>
-                </div>
+                <Link
+                  href="/login"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  로그인
+                </Link>
               )}
             </div>
           </nav>
@@ -241,49 +233,43 @@ export default function Header() {
       {isMobileMenuOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
-            <button
-              onClick={() => handleNavigation("/")}
+            <Link
+              href="/"
               className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left transition-colors ${
-                pathname === "/"
-                  ? "bg-blue-100 text-blue-700"
-                  : "text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+                pathname === '/'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
               }`}
-              tabIndex={0}
-              aria-label="마크다운 제출 페이지"
             >
-              📝 문서 제출
-            </button>
+              홈
+            </Link>
 
             {/* 모바일 문제목록 */}
             <div className="space-y-1">
               <div className="px-3 py-2 text-sm font-medium text-gray-500">
-                📚 문제목록
+                문제목록
               </div>
               {demoQuizzes.map((quiz) => (
-                <button
+                <Link
                   key={quiz.id}
-                  onClick={() => selectQuizSample(quiz.content)}
+                  href={`/quizzes/${quiz.id}`}
                   className="block px-6 py-2 rounded-md text-sm font-medium w-full text-left transition-colors text-gray-600 hover:text-blue-600 hover:bg-gray-50"
-                  tabIndex={0}
-                  aria-label={`${quiz.title} 선택`}
                 >
                   {quiz.title}
-                </button>
+                </Link>
               ))}
             </div>
 
-            <button
-              onClick={() => handleNavigation("/history")}
+            <Link
+              href="/history"
               className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left transition-colors ${
-                pathname === "/history"
-                  ? "bg-blue-100 text-blue-700"
-                  : "text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+                pathname === '/history'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
               }`}
-              tabIndex={0}
-              aria-label="제출 히스토리 페이지"
             >
-              📊 히스토리
-            </button>
+              히스토리
+            </Link>
 
             {/* 모바일 사용자 메뉴 */}
             <div className="border-t border-gray-200 pt-4 pb-3">
@@ -306,14 +292,14 @@ export default function Header() {
                   <div className="px-3 py-2 text-sm text-gray-500">
                     🔓 현재 게스트 모드로 이용 중
                   </div>
-                  <button
-                    onClick={() => handleNavigation("/login")}
+                  <Link
+                    href="/login"
                     className="mx-3 w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
                     tabIndex={0}
                     aria-label="구글로 로그인"
                   >
                     구글 로그인
-                  </button>
+                  </Link>
                 </div>
               )}
             </div>

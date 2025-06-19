@@ -31,14 +31,16 @@
 - 문서 내 **특정 조건에 따라 텍스트가 공란으로 변환**되어 문제로 제공됩니다.
 - 사용자는 공란에 직접 답을 입력할 수 있으며, 정답 확인 기능도 지원됩니다.
 
-### 🔐 구글 소셜로그인
+### 🔐 인증 시스템
 
-- 구글 계정으로 로그인하여 사용자별 퀴즈 관리 기능을 이용할 수 있습니다.
-- **게스트 모드**로도 이용 가능하며, 이 경우 데이터는 브라우저 로컬 저장소에 저장됩니다.
+- **구글 OAuth 로그인**: 구글 계정으로 간편 로그인
+- **이메일/비밀번호 로그인**: 전통적인 로그인 방식
+- **게스트 모드**: 로그인 없이도 이용 가능
+- **보호된 라우트**: 인증이 필요한 페이지 보호
 
 ### 🎯 사용자별 퀴즈 관리
 
-- **구글 로그인 시**: 퀴즈 데이터가 클라우드에 저장되어 어디서든 접근 가능합니다.
+- **로그인 시**: 퀴즈 데이터가 클라우드에 저장되어 어디서든 접근 가능합니다.
 - **게스트 모드 시**: 브라우저 로컬 저장소를 사용하여 빠르게 이용할 수 있습니다.
 
 ### 🛠️ 개발자 도구
@@ -65,12 +67,12 @@
 
 ## 🛠️ 기술 스택
 
-- Framework: **Next.js + TypeScript**
+- Framework: **Next.js 15 + React 19 + TypeScript**
 - Styling: **Tailwind CSS**
 - State: `useState`, `useEffect`, `localStorage` 기반 (향후 React Query 등 도입 가능)
 - Parsing: `remark`, `gray-matter` 등 마크다운 파서 (예정)
 - Authentication: **Supabase Auth**
-- Database: **Supabase**
+- Database: **Supabase PostgreSQL**
 
 ---
 
@@ -80,6 +82,10 @@
 - ✅ 샘플 문서 선택 기능
 - ✅ 데모 데이터 관리 도구
 - ✅ 공란 문제 생성 및 풀이
+- ✅ 구글 OAuth 로그인
+- ✅ 이메일/비밀번호 로그인
+- ✅ 인증 상태 관리
+- ✅ 보호된 라우트
 - ⏳ 정답 자동 채점
 - ⏳ 사용자별 결과 저장 (향후 로그인 도입 시)
 - ⏳ AI 기반 자동 퀴즈 생성 (OpenAI 연동 가능성)
@@ -146,15 +152,23 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 npm run dev
 ```
 
-## 구글 OAuth 설정
+## 🔐 슈퍼베이스 인증 설정
 
-### 1. Supabase 설정
+### 1. 슈퍼베이스 프로젝트 생성
 
-1. [Supabase](https://supabase.com)에서 새 프로젝트 생성
-2. Authentication > Providers에서 Google 활성화
-3. 구글 클라이언트 ID와 비밀번호 입력
+1. [Supabase](https://supabase.com)에 가입하고 새 프로젝트를 생성합니다.
+2. 프로젝트 설정에서 URL과 API 키를 확인합니다.
 
-### 2. Google Cloud Console 설정
+### 2. 구글 OAuth 설정
+
+#### Supabase 설정
+
+1. 슈퍼베이스 대시보드에서 **Authentication** > **Providers**로 이동
+2. **Google** 제공자를 활성화
+3. Google Cloud Console에서 OAuth 2.0 클라이언트 ID와 시크릿을 생성
+4. 리디렉션 URL을 `https://your-project.supabase.co/auth/v1/callback`로 설정
+
+#### Google Cloud Console 설정
 
 1. [Google Cloud Console](https://console.cloud.google.com) 접속
 2. 새 프로젝트 생성 또는 기존 프로젝트 선택
@@ -163,12 +177,53 @@ npm run dev
    - 애플리케이션 유형: 웹 애플리케이션
    - 승인된 리디렉션 URI: `https://your-project-ref.supabase.co/auth/v1/callback`
 
-### 3. 환경변수 설정
+### 3. 이메일 인증 설정
 
-Supabase 프로젝트 설정에서 다음 정보를 복사하여 `.env.local`에 설정:
+1. **Authentication** > **Settings**에서 이메일 템플릿을 커스터마이징
+2. **Email confirmations**를 활성화하여 이메일 확인 필요
+3. **Secure email change**를 활성화하여 이메일 변경 시 확인 필요
 
-- `NEXT_PUBLIC_SUPABASE_URL`: 프로젝트 URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: 익명 키
+### 4. 데이터베이스 스키마 (선택사항)
+
+사용자별 퀴즈 데이터를 저장하려면 다음 테이블을 생성합니다:
+
+```sql
+-- 사용자 프로필 테이블
+CREATE TABLE profiles (
+  id UUID REFERENCES auth.users(id) PRIMARY KEY,
+  name TEXT,
+  avatar_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 퀴즈 히스토리 테이블
+CREATE TABLE quiz_history (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id),
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  questions JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- RLS (Row Level Security) 활성화
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quiz_history ENABLE ROW LEVEL SECURITY;
+
+-- 정책 설정
+CREATE POLICY "Users can view own profile" ON profiles
+  FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile" ON profiles
+  FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "Users can view own quiz history" ON quiz_history
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own quiz history" ON quiz_history
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+```
 
 ## 사용 방법
 
@@ -182,7 +237,8 @@ Supabase 프로젝트 설정에서 다음 정보를 복사하여 `.env.local`에
 
 1. **게스트 모드**: 바로 메인 페이지에서 Markdown 문서 입력 후 사용
 2. **구글 로그인**: `/login` 페이지에서 구글 계정으로 로그인 (선택사항)
-3. "퀴즈 생성하기" 버튼 클릭하여 퀴즈 생성
+3. **이메일 로그인**: `/email-login` 페이지에서 이메일/비밀번호로 로그인 (선택사항)
+4. "퀴즈 생성하기" 버튼 클릭하여 퀴즈 생성
 
 ## 라이센스
 

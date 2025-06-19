@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { useState, type KeyboardEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,7 +16,7 @@ const LoginPage = () => {
       setError(null);
 
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
@@ -25,18 +26,18 @@ const LoginPage = () => {
         setError(error.message);
       }
     } catch {
-      setError("로그인 중 오류가 발생했습니다.");
+      setError('로그인 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGuestMode = () => {
-    router.push("/");
+    router.push('/');
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent, action: () => void) => {
-    if (event.key === "Enter" || event.key === " ") {
+  const handleKeyDown = (event: KeyboardEvent, action: () => void) => {
+    if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       action();
     }
@@ -112,6 +113,25 @@ const LoginPage = () => {
           </div>
         </div>
 
+        {/* 이메일 로그인 */}
+        <Link
+          href="/email-login"
+          className="w-full flex items-center justify-center gap-3 bg-blue-600 border border-blue-600 rounded-lg px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-white font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors mb-4"
+        >
+          <span className="text-lg">📧</span>
+          <span>이메일로 로그인</span>
+        </Link>
+
+        {/* 구분선 */}
+        <div className="relative mb-4">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-xs sm:text-sm">
+            <span className="bg-white px-2 text-gray-500">또는</span>
+          </div>
+        </div>
+
         {/* 게스트 모드 */}
         <button
           onClick={handleGuestMode}
@@ -134,6 +154,14 @@ const LoginPage = () => {
               퀴즈 기록이 클라우드에 저장되어 어디서든 접근 가능
             </p>
           </div>
+          <div className="bg-green-50 p-3 rounded-lg">
+            <h4 className="font-medium text-green-900 mb-1">
+              📧 이메일 로그인 시
+            </h4>
+            <p className="text-green-800">
+              이메일과 비밀번호로 안전하게 로그인
+            </p>
+          </div>
           <div className="bg-gray-50 p-3 rounded-lg">
             <h4 className="font-medium text-gray-900 mb-1">
               🔓 게스트 모드 시
@@ -146,14 +174,14 @@ const LoginPage = () => {
 
         <div className="mt-6 text-center">
           <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
-            계속 진행하시면{" "}
+            계속 진행하시면{' '}
             <a
               href="#"
               className="text-blue-600 hover:text-blue-500 hover:underline focus:underline focus:outline-none"
             >
               이용약관
             </a>
-            과{" "}
+            과{' '}
             <a
               href="#"
               className="text-blue-600 hover:text-blue-500 hover:underline focus:underline focus:outline-none"
