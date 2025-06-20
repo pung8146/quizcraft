@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { demoQuizzes } from '@/lib/demoData';
 import type { User } from '@supabase/supabase-js';
@@ -12,7 +12,6 @@ export default function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isQuizDropdownOpen, setIsQuizDropdownOpen] = useState(false);
-  const router = useRouter();
   const pathname = usePathname();
   const { signOut } = useAuth();
 
@@ -48,24 +47,8 @@ export default function Header() {
     }
   };
 
-  const handleNavigation = (path: string) => {
-    router.push(path);
-    setIsMobileMenuOpen(false);
-    setIsQuizDropdownOpen(false);
-  };
-
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const toggleQuizDropdown = () => {
-    setIsQuizDropdownOpen(!isQuizDropdownOpen);
-  };
-
-  const selectQuizSample = (content: string) => {
-    // localStorage에 선택된 퀴즈 내용 저장
-    localStorage.setItem('selectedQuizContent', content);
-    handleNavigation('/');
   };
 
   const handleKeyDown = (event: React.KeyboardEvent, action: () => void) => {
