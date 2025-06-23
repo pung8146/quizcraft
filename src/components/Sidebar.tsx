@@ -1,12 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
-import type { User } from "@supabase/supabase-js";
-import { useAuth } from "./AuthProvider";
-import { supabase } from "@/lib/supabase";
-import { demoQuizzes } from "@/lib/demoData";
+import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import type { User } from '@supabase/supabase-js';
+import { useAuth } from './AuthProvider';
+import { supabase } from '@/lib/supabase';
 
 interface SidebarProps {
   isMobileMenuOpen: boolean;
@@ -29,18 +28,18 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
     try {
       await signOut();
     } catch (error) {
-      console.error("로그아웃 오류:", error);
+      console.error('로그아웃 오류:', error);
     }
   };
 
-  const activeLinkClasses = "bg-blue-100 text-blue-700";
+  const activeLinkClasses = 'bg-blue-100 text-blue-700';
   const inactiveLinkClasses =
-    "text-gray-600 hover:text-blue-600 hover:bg-gray-50";
+    'text-gray-600 hover:text-blue-600 hover:bg-gray-50';
 
   return (
     <aside
       className={`fixed top-0 left-0 z-40 w-64 h-screen bg-white border-r transition-transform md:translate-x-0 ${
-        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
       }`}
     >
       <div className="h-full px-3 py-4 overflow-y-auto">
@@ -55,7 +54,7 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
             <Link
               href="/"
               className={`flex items-center p-2 rounded-lg ${
-                pathname === "/" ? activeLinkClasses : inactiveLinkClasses
+                pathname === '/' ? activeLinkClasses : inactiveLinkClasses
               }`}
             >
               <span className="ml-3">퀴즈 만들기</span>
@@ -70,7 +69,7 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
               <span className="flex-1 ml-3 whitespace-nowrap">문제목록</span>
               <svg
                 className={`w-3 h-3 transition-transform ${
-                  isQuizDropdownOpen ? "rotate-180" : ""
+                  isQuizDropdownOpen ? 'rotate-180' : ''
                 }`}
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
@@ -86,29 +85,12 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
                 />
               </svg>
             </button>
-            {isQuizDropdownOpen && (
-              <ul className="py-2 space-y-2">
-                <li className="px-3 py-2 text-xs font-medium text-gray-500 bg-gray-50">
-                  샘플 퀴즈
-                </li>
-                {demoQuizzes.map((quiz) => (
-                  <li key={quiz.id}>
-                    <Link
-                      href={`/quizzes/${quiz.id}`}
-                      className={`flex items-center w-full p-2 pl-11 rounded-lg transition duration-75 group ${inactiveLinkClasses}`}
-                    >
-                      {quiz.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
           </li>
           <li>
             <Link
               href="/history"
               className={`flex items-center p-2 rounded-lg ${
-                pathname === "/history"
+                pathname === '/history'
                   ? activeLinkClasses
                   : inactiveLinkClasses
               }`}

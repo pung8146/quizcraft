@@ -1,31 +1,16 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { nanoid } from "nanoid";
-import DemoDataControls from "@/components/DemoDataControls";
-import { initializeDemoData } from "@/lib/demoData";
-import { quizPlaceholders } from "@/lib/quizPlaceholders";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { nanoid } from 'nanoid';
+import { quizPlaceholders } from '@/lib/quizPlaceholders';
 
 export default function HomePage() {
-  const [markdown, setMarkdown] = useState("");
+  const [markdown, setMarkdown] = useState('');
   const router = useRouter();
 
-  // 페이지 로드 시 데모 데이터 자동 초기화 및 헤더에서 선택된 퀴즈 로드
-  useEffect(() => {
-    initializeDemoData();
-
-    // 헤더에서 선택된 퀴즈 내용 확인
-    const selectedContent = localStorage.getItem("selectedQuizContent");
-    if (selectedContent) {
-      setMarkdown(selectedContent);
-      // 사용 후 제거
-      localStorage.removeItem("selectedQuizContent");
-    }
-  }, []);
-
   const handleGenerateQuiz = () => {
-    if (!markdown.trim()) return alert("마크다운을 입력해주세요.");
+    if (!markdown.trim()) return alert('마크다운을 입력해주세요.');
 
     const slug = nanoid(8); // 랜덤 ID 생성
     const createdAt = new Date().toISOString();
@@ -46,12 +31,12 @@ export default function HomePage() {
   };
 
   const extractTitle = (content: string): string => {
-    const lines = content.split("\n");
-    const titleLine = lines.find((line) => line.startsWith("# "));
+    const lines = content.split('\n');
+    const titleLine = lines.find((line) => line.startsWith('# '));
     if (titleLine) {
-      return titleLine.replace("# ", "").trim();
+      return titleLine.replace('# ', '').trim();
     }
-    return content.substring(0, 50) + (content.length > 50 ? "..." : "");
+    return content.substring(0, 50) + (content.length > 50 ? '...' : '');
   };
 
   return (
@@ -90,15 +75,15 @@ export default function HomePage() {
             <div className="text-sm text-gray-500 order-2 sm:order-1">
               {markdown.length > 0
                 ? `${markdown.length}자 입력됨`
-                : "문서를 입력해주세요"}
+                : '문서를 입력해주세요'}
             </div>
             <button
               onClick={handleGenerateQuiz}
               disabled={!markdown.trim()}
               className={`order-1 sm:order-2 w-full sm:w-auto px-6 py-3 sm:py-2 rounded-md font-medium transition-colors ${
                 markdown.trim()
-                  ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  ? 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
               tabIndex={0}
               aria-label="퀴즈 생성"
@@ -119,9 +104,6 @@ export default function HomePage() {
             <li>• 생성된 퀴즈는 히스토리에서 다시 확인할 수 있습니다</li>
           </ul>
         </div>
-
-        {/* 개발자 도구 */}
-        <DemoDataControls className="mt-6 sm:mt-8" />
       </div>
     </div>
   );
