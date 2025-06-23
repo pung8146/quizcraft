@@ -15,17 +15,25 @@ const LoginPage = () => {
       setIsLoading(true);
       setError(null);
 
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log('구글 로그인 시작...');
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
+      console.log('OAuth 응답:', { data, error });
+
       if (error) {
-        setError(error.message);
+        console.error('구글 로그인 에러:', error);
+        setError(`로그인 오류: ${error.message}`);
+      } else if (data) {
+        console.log('OAuth URL 생성됨:', data.url);
       }
-    } catch {
+    } catch (err) {
+      console.error('구글 로그인 예외:', err);
       setError('로그인 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
