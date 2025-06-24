@@ -14,6 +14,7 @@ interface SidebarProps {
 export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isQuizDropdownOpen, setIsQuizDropdownOpen] = useState(false);
+  const [isMyPageDropdownOpen, setIsMyPageDropdownOpen] = useState(false);
   const pathname = usePathname();
   const { signOut } = useAuth();
 
@@ -86,18 +87,70 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
               </svg>
             </button>
           </li>
-          <li>
-            <Link
-              href="/history"
-              className={`flex items-center p-2 rounded-lg ${
-                pathname === '/history'
-                  ? activeLinkClasses
-                  : inactiveLinkClasses
-              }`}
-            >
-              <span className="ml-3">히스토리</span>
-            </Link>
-          </li>
+          {user && (
+            <>
+              <li>
+                <button
+                  type="button"
+                  className={`flex items-center w-full p-2 text-left rounded-lg ${
+                    pathname.startsWith('/mypage')
+                      ? activeLinkClasses
+                      : inactiveLinkClasses
+                  }`}
+                  onClick={() => setIsMyPageDropdownOpen(!isMyPageDropdownOpen)}
+                >
+                  <span className="flex-1 ml-3 whitespace-nowrap">
+                    마이페이지
+                  </span>
+                  <svg
+                    className={`w-3 h-3 transition-transform ${
+                      isMyPageDropdownOpen ? 'rotate-180' : ''
+                    }`}
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 10 6"
+                  >
+                    <path
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="m1 1 4 4 4-4"
+                    />
+                  </svg>
+                </button>
+                {isMyPageDropdownOpen && (
+                  <ul className="ml-6 mt-2 space-y-2">
+                    <li>
+                      <Link
+                        href="/mypage"
+                        className={`flex items-center p-2 rounded-lg text-sm ${
+                          pathname === '/mypage'
+                            ? activeLinkClasses
+                            : inactiveLinkClasses
+                        }`}
+                      >
+                        <span className="ml-3">개요</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/mypage/history"
+                        className={`flex items-center p-2 rounded-lg text-sm ${
+                          pathname === '/mypage/history'
+                            ? activeLinkClasses
+                            : inactiveLinkClasses
+                        }`}
+                      >
+                        <span className="ml-3">퀴즈 히스토리</span>
+                      </Link>
+                    </li>
+                  </ul>
+                )}
+              </li>
+            </>
+          )}
         </ul>
 
         <div className="absolute bottom-0 left-0 w-full p-4 border-t">

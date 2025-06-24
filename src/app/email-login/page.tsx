@@ -38,6 +38,7 @@ const EmailLoginPage = () => {
       }
     } catch (err) {
       setError('오류가 발생했습니다. 다시 시도해주세요.');
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
