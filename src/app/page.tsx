@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { nanoid } from 'nanoid';
 import { quizPlaceholders } from '@/lib/quizPlaceholders';
@@ -62,7 +62,7 @@ export default function HomePage() {
           </label>
           <textarea
             id="markdown-input"
-            className="w-full h-48 sm:h-64 lg:h-72 border rounded-md p-3 sm:p-4 text-sm font-mono resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="w-full h-48 sm:h-64 lg:h-72 border rounded-md p-3 sm:p-4 text-sm font-mono resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-500"
             placeholder={quizPlaceholders[0].content}
             value={markdown}
             onChange={(e) => setMarkdown(e.target.value)}
@@ -91,18 +91,6 @@ export default function HomePage() {
               퀴즈 생성하기 →
             </button>
           </div>
-        </div>
-
-        {/* 사용 팁 */}
-        <div className="bg-blue-50 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
-          <h3 className="font-semibold text-blue-900 mb-3 text-base sm:text-lg">
-            💡 사용 팁
-          </h3>
-          <ul className="text-sm sm:text-base text-blue-800 space-y-2">
-            <li>• 제목과 섹션을 명확히 구분해주세요 (# 제목, ## 섹션)</li>
-            <li>• 중요한 개념과 정의를 포함해주세요</li>
-            <li>• 생성된 퀴즈는 히스토리에서 다시 확인할 수 있습니다</li>
-          </ul>
         </div>
       </div>
     </div>

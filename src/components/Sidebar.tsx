@@ -61,32 +61,6 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
               <span className="ml-3">퀴즈 만들기</span>
             </Link>
           </li>
-          <li>
-            <button
-              type="button"
-              className={`flex items-center w-full p-2 text-left rounded-lg ${inactiveLinkClasses}`}
-              onClick={() => setIsQuizDropdownOpen(!isQuizDropdownOpen)}
-            >
-              <span className="flex-1 ml-3 whitespace-nowrap">문제목록</span>
-              <svg
-                className={`w-3 h-3 transition-transform ${
-                  isQuizDropdownOpen ? 'rotate-180' : ''
-                }`}
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 10 6"
-              >
-                <path
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="m1 1 4 4 4-4"
-                />
-              </svg>
-            </button>
-          </li>
           {user && (
             <>
               <li>
