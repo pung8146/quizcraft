@@ -27,7 +27,7 @@ export async function generateQuizFromContent(
 텍스트:
 ${content}
 
-다음 JSON 형식으로 응답해주세요:
+다음 JSON 형식으로만 응답해주세요 (마크다운이나 다른 텍스트 없이 순수 JSON만):
 {
   "summary": "텍스트의 핵심 내용을 3-4문장으로 요약",
   "keyPoints": ["핵심 포인트 1", "핵심 포인트 2", "핵심 포인트 3"],
@@ -66,7 +66,7 @@ ${content}
         {
           role: 'system',
           content:
-            '당신은 교육 전문가입니다. 주어진 텍스트를 분석하여 효과적인 학습 자료와 퀴즈를 생성합니다.',
+            '당신은 교육 전문가입니다. 주어진 텍스트를 분석하여 효과적인 학습 자료와 퀴즈를 생성합니다. 응답은 반드시 유효한 JSON 형식으로만 제공하세요. 마크다운 코드 블록이나 다른 텍스트를 포함하지 마세요.',
         },
         {
           role: 'user',
@@ -82,8 +82,28 @@ ${content}
       throw new Error('OpenAI API에서 응답을 받지 못했습니다.');
     }
 
+    // 마크다운에서 JSON 추출
+    let jsonString = responseContent;
+
+    // ```json으로 감싸진 경우 제거
+    if (responseContent.includes('```json')) {
+      const jsonMatch = responseContent.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonMatch && jsonMatch[1]) {
+        jsonString = jsonMatch[1].trim();
+      }
+    }
+    // ```로만 감싸진 경우 제거
+    else if (responseContent.includes('```')) {
+      const jsonMatch = responseContent.match(/```\s*([\s\S]*?)\s*```/);
+      if (jsonMatch && jsonMatch[1]) {
+        jsonString = jsonMatch[1].trim();
+      }
+    }
+
+    console.log('추출된 JSON:', jsonString.substring(0, 200) + '...');
+
     // JSON 파싱
-    const result = JSON.parse(responseContent) as GeneratedQuiz;
+    const result = JSON.parse(jsonString) as GeneratedQuiz;
 
     // 데이터 검증
     if (!result.summary || !result.keyPoints || !result.questions) {

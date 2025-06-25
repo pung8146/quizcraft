@@ -3,7 +3,15 @@ import { generateQuizFromContent } from '@/lib/openai';
 
 export async function POST(request: NextRequest) {
   try {
+    // 환경변수 확인
+    console.log('=== API 라우트 디버깅 ===');
+    console.log(
+      'API 키 상태:',
+      process.env.OPENAI_API_KEY ? '설정됨' : '❌ 설정되지 않음'
+    );
+
     const { content } = await request.json();
+    console.log('받은 내용 길이:', content?.length || 0);
 
     if (
       !content ||
@@ -24,14 +32,62 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('퀴즈 생성 시작...');
     const generatedQuiz = await generateQuizFromContent(content);
+    console.log('퀴즈 생성 완료!');
 
     return NextResponse.json({
       success: true,
       data: generatedQuiz,
     });
   } catch (error) {
-    console.error('퀴즈 생성 API 오류:', error);
+    console.error('=== 상세 오류 정보 ===');
+    console.error('오류 타입:', error?.constructor?.name);
+    console.error(
+      '오류 메시지:',
+      error instanceof Error ? error.message : error
+    );
+    console.error('전체 오류:', error);
+
+    // OpenAI 관련 오류 처리
+    if (error instanceof Error) {
+      if (
+        error.message.includes('API key') ||
+        error.message.includes('apiKey')
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              'OpenAI API 키가 설정되지 않았거나 올바르지 않습니다. .env.local 파일을 확인해주세요.',
+          },
+          { status: 500 }
+        );
+      }
+
+      if (error.message.includes('JSON') || error.message.includes('parse')) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'AI 응답 형식 오류가 발생했습니다. 다시 시도해주세요.',
+          },
+          { status: 500 }
+        );
+      }
+
+      if (
+        error.message.includes('quota') ||
+        error.message.includes('rate limit')
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'API 사용량 한도에 도달했습니다. 잠시 후 다시 시도해주세요.',
+          },
+          { status: 500 }
+        );
+      }
+    }
 
     const errorMessage =
       error instanceof Error
