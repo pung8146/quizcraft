@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/AuthProvider';
 
 interface QuizItem {
   id: string;
@@ -14,6 +15,7 @@ export default function HistoryPage() {
   const [quizHistory, setQuizHistory] = useState<QuizItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { user } = useAuth();
 
   useEffect(() => {
     loadQuizHistory();
@@ -131,42 +133,6 @@ export default function HistoryPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto py-6 sm:py-8 lg:py-12">
-        {/* 브레드크럼 네비게이션 */}
-        <nav className="flex mb-6" aria-label="Breadcrumb">
-          <ol className="inline-flex items-center space-x-1 md:space-x-3">
-            <li className="inline-flex items-center">
-              <button
-                onClick={() => router.push('/mypage')}
-                className="text-gray-500 hover:text-blue-600 text-sm"
-              >
-                마이페이지
-              </button>
-            </li>
-            <li>
-              <div className="flex items-center">
-                <svg
-                  className="w-3 h-3 text-gray-400 mx-1"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 6 10"
-                >
-                  <path
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="m1 9 4-4-4-4"
-                  />
-                </svg>
-                <span className="text-sm font-medium text-gray-700">
-                  히스토리
-                </span>
-              </div>
-            </li>
-          </ol>
-        </nav>
-
         {/* 헤더 섹션 */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 sm:mb-10 space-y-4 sm:space-y-0">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
@@ -184,6 +150,26 @@ export default function HistoryPage() {
           )}
         </div>
 
+        {/* 사용자 상태 표시 */}
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          {user ? (
+            <p className="text-blue-800">
+              <span className="font-medium">
+                {user.user_metadata?.name || user.email}
+              </span>
+              님의 퀴즈 히스토리
+            </p>
+          ) : (
+            <p className="text-blue-800">
+              <span className="font-medium">게스트</span> 사용자의 로컬 퀴즈
+              히스토리
+              <span className="block text-sm text-blue-600 mt-1">
+                로그인하시면 클라우드에 안전하게 저장됩니다.
+              </span>
+            </p>
+          )}
+        </div>
+
         {quizHistory.length === 0 ? (
           /* 빈 상태 */
           <div className="text-center py-16 sm:py-20">
@@ -198,9 +184,9 @@ export default function HistoryPage() {
               onClick={() => router.push('/')}
               className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               tabIndex={0}
-              aria-label="문서 제출 페이지로 이동"
+              aria-label="퀴즈 만들기 페이지로 이동"
             >
-              문서 제출하기 →
+              퀴즈 만들기 →
             </button>
           </div>
         ) : (
@@ -211,22 +197,28 @@ export default function HistoryPage() {
                 key={quiz.id}
                 className="bg-white border rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 space-y-4 sm:space-y-0">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 break-words">
+                <div className="flex flex-col space-y-4">
+                  {/* 퀴즈 정보 */}
+                  <div className="flex-1">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 line-clamp-2">
                       {quiz.title}
                     </h3>
-                    <div className="space-y-1 text-sm text-gray-500">
-                      <p>생성일: {formatDate(quiz.createdAt)}</p>
-                      <p className="font-mono text-xs">ID: {quiz.id}</p>
+                    <p className="text-sm text-gray-500 mb-3">
+                      생성일: {formatDate(quiz.createdAt)}
+                    </p>
+                    <div className="text-gray-600 text-sm line-clamp-3">
+                      <div className="bg-gray-50 p-3 rounded border text-xs font-mono overflow-hidden">
+                        {quiz.content.substring(0, 150)}
+                        {quiz.content.length > 150 && '...'}
+                      </div>
                     </div>
                   </div>
 
                   {/* 액션 버튼들 */}
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:ml-4">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 border-t">
                     <button
                       onClick={() => handleViewQuiz(quiz.id)}
-                      className="w-full sm:w-auto px-4 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                      className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm sm:text-base"
                       tabIndex={0}
                       aria-label={`${quiz.title} 퀴즈 보기`}
                     >
@@ -234,21 +226,13 @@ export default function HistoryPage() {
                     </button>
                     <button
                       onClick={() => handleDeleteQuiz(quiz.id)}
-                      className="w-full sm:w-auto px-4 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                      className="flex-1 sm:flex-none px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-sm sm:text-base"
                       tabIndex={0}
                       aria-label={`${quiz.title} 퀴즈 삭제`}
                     >
                       삭제
                     </button>
                   </div>
-                </div>
-
-                {/* 콘텐츠 미리보기 */}
-                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
-                  <p className="text-sm sm:text-base text-gray-600 line-clamp-3 break-words">
-                    {quiz.content.substring(0, 200)}
-                    {quiz.content.length > 200 && '...'}
-                  </p>
                 </div>
               </div>
             ))}

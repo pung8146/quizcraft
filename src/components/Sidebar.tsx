@@ -13,7 +13,6 @@ interface SidebarProps {
 
 export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
   const [user, setUser] = useState<User | null>(null);
-  const [isMyPageDropdownOpen, setIsMyPageDropdownOpen] = useState(false);
   const pathname = usePathname();
   const { signOut } = useAuth();
 
@@ -50,6 +49,7 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
         </div>
 
         <ul className="space-y-2 font-medium">
+          {/* 퀴즈 생성 */}
           <li>
             <Link
               href="/"
@@ -57,74 +57,86 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
                 pathname === '/' ? activeLinkClasses : inactiveLinkClasses
               }`}
             >
-              <span className="ml-3">퀴즈 만들기</span>
+              <svg
+                className="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+              </svg>
+              <span className="ml-3">퀴즈 생성</span>
             </Link>
           </li>
+
+          {/* 퀴즈 히스토리 - 모든 사용자가 접근 가능 */}
+          <li>
+            <Link
+              href="/history"
+              className={`flex items-center p-2 rounded-lg ${
+                pathname === '/history'
+                  ? activeLinkClasses
+                  : inactiveLinkClasses
+              }`}
+            >
+              <svg
+                className="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
+              </svg>
+              <span className="ml-3">퀴즈 히스토리</span>
+            </Link>
+          </li>
+
+          {/* 마이페이지 - 로그인한 사용자만 */}
           {user && (
-            <>
-              <li>
-                <button
-                  type="button"
-                  className={`flex items-center w-full p-2 text-left rounded-lg ${
-                    pathname.startsWith('/mypage')
-                      ? activeLinkClasses
-                      : inactiveLinkClasses
-                  }`}
-                  onClick={() => setIsMyPageDropdownOpen(!isMyPageDropdownOpen)}
+            <li>
+              <Link
+                href="/mypage"
+                className={`flex items-center p-2 rounded-lg ${
+                  pathname === '/mypage'
+                    ? activeLinkClasses
+                    : inactiveLinkClasses
+                }`}
+              >
+                <svg
+                  className="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
                 >
-                  <span className="flex-1 ml-3 whitespace-nowrap">
-                    마이페이지
-                  </span>
-                  <svg
-                    className={`w-3 h-3 transition-transform ${
-                      isMyPageDropdownOpen ? 'rotate-180' : ''
-                    }`}
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 10 6"
-                  >
-                    <path
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="m1 1 4 4 4-4"
-                    />
-                  </svg>
-                </button>
-                {isMyPageDropdownOpen && (
-                  <ul className="ml-6 mt-2 space-y-2">
-                    <li>
-                      <Link
-                        href="/mypage"
-                        className={`flex items-center p-2 rounded-lg text-sm ${
-                          pathname === '/mypage'
-                            ? activeLinkClasses
-                            : inactiveLinkClasses
-                        }`}
-                      >
-                        <span className="ml-3">개요</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        href="/mypage/history"
-                        className={`flex items-center p-2 rounded-lg text-sm ${
-                          pathname === '/mypage/history'
-                            ? activeLinkClasses
-                            : inactiveLinkClasses
-                        }`}
-                      >
-                        <span className="ml-3">퀴즈 히스토리</span>
-                      </Link>
-                    </li>
-                  </ul>
-                )}
-              </li>
-            </>
+                  <path d="M10 0a10 10 0 1 0 10 10A10.011 10.011 0 0 0 10 0Zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 13a8.949 8.949 0 0 1-4.951-1.488A3.987 3.987 0 0 1 9 13h2a3.987 3.987 0 0 1 3.951 3.512A8.949 8.949 0 0 1 10 18Z" />
+                </svg>
+                <span className="ml-3">마이페이지</span>
+              </Link>
+            </li>
           )}
         </ul>
+
+        {/* 게스트 사용자를 위한 안내 */}
+        {!user && (
+          <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800 mb-2">
+              💡 <strong>게스트 모드</strong>
+            </p>
+            <p className="text-xs text-blue-600 mb-3">
+              퀴즈는 브라우저에 임시 저장됩니다. 로그인하시면 안전하게
+              클라우드에 저장할 수 있습니다.
+            </p>
+            <Link
+              href="/login"
+              className="text-xs text-blue-600 hover:text-blue-800 underline"
+            >
+              로그인하기 →
+            </Link>
+          </div>
+        )}
 
         <div className="absolute bottom-0 left-0 w-full p-4 border-t">
           {user ? (

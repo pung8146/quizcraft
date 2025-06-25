@@ -93,7 +93,7 @@ export default function MyPage() {
             👤 마이페이지
           </h1>
           <p className="text-gray-600">
-            프로필 정보와 생성한 퀴즈들을 관리할 수 있습니다.
+            프로필 정보와 계정 설정을 관리할 수 있습니다.
           </p>
         </div>
 
@@ -168,10 +168,10 @@ export default function MyPage() {
           </div>
         </div>
 
-        {/* 메뉴 카드들 */}
+        {/* 빠른 액션 카드들 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <Link
-            href="/mypage/history"
+            href="/history"
             className="block bg-white border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow group"
           >
             <div className="flex items-center justify-between">
@@ -204,18 +204,20 @@ export default function MyPage() {
             </div>
           </Link>
 
-          <div className="bg-white border rounded-lg p-6 shadow-sm opacity-50">
+          <Link
+            href="/"
+            className="block bg-white border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow group"
+          >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  ⚙️ 설정
+                <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                  ➕ 새 퀴즈 만들기
                 </h3>
                 <p className="text-gray-600 text-sm">
-                  계정 설정 및 환경설정을 변경하세요
+                  마크다운 문서로 새로운 퀴즈를 생성하세요
                 </p>
-                <p className="text-gray-400 text-sm mt-2">(준비 중)</p>
               </div>
-              <div className="text-gray-300">
+              <div className="text-gray-400 group-hover:text-blue-600 transition-colors">
                 <svg
                   className="w-6 h-6"
                   fill="none"
@@ -230,6 +232,35 @@ export default function MyPage() {
                   />
                 </svg>
               </div>
+            </div>
+          </Link>
+        </div>
+
+        {/* 계정 설정 섹션 */}
+        <div className="mt-8 bg-white border rounded-lg p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            계정 설정
+          </h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-sm font-medium text-gray-700">계정 타입</p>
+                <p className="text-xs text-gray-500">
+                  현재 사용 중인 계정 타입
+                </p>
+              </div>
+              <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+                무료 계정
+              </span>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-sm font-medium text-gray-700">데이터 저장</p>
+                <p className="text-xs text-gray-500">퀴즈 데이터 저장 방식</p>
+              </div>
+              <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                로컬 + 클라우드
+              </span>
             </div>
           </div>
         </div>
