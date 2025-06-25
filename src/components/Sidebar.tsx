@@ -13,7 +13,6 @@ interface SidebarProps {
 
 export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
   const [user, setUser] = useState<User | null>(null);
-  const [isQuizDropdownOpen, setIsQuizDropdownOpen] = useState(false);
   const [isMyPageDropdownOpen, setIsMyPageDropdownOpen] = useState(false);
   const pathname = usePathname();
   const { signOut } = useAuth();

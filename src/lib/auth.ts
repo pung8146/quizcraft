@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthError } from '@supabase/supabase-js';
 
 export interface AuthUser {
   id: string;
@@ -47,7 +47,7 @@ export const signOut = async (): Promise<void> => {
 export const signInWithEmail = async (
   email: string,
   password: string
-): Promise<{ user: User | null; error: any }> => {
+): Promise<{ user: User | null; error: AuthError | null }> => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -63,7 +63,7 @@ export const signInWithEmail = async (
 export const signUpWithEmail = async (
   email: string,
   password: string
-): Promise<{ user: User | null; error: any }> => {
+): Promise<{ user: User | null; error: AuthError | null }> => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -76,7 +76,9 @@ export const signUpWithEmail = async (
 };
 
 // 비밀번호 재설정 이메일 보내기
-export const resetPassword = async (email: string): Promise<{ error: any }> => {
+export const resetPassword = async (
+  email: string
+): Promise<{ error: AuthError | null }> => {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/auth/reset-password`,
   });
@@ -88,7 +90,7 @@ export const resetPassword = async (email: string): Promise<{ error: any }> => {
 export const updateProfile = async (updates: {
   name?: string;
   avatar_url?: string;
-}): Promise<{ error: any }> => {
+}): Promise<{ error: AuthError | null }> => {
   const { error } = await supabase.auth.updateUser({
     data: updates,
   });
