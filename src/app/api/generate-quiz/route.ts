@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateQuizFromContent } from '@/lib/openai';
+import { saveQuizRecord } from '@/lib/database';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,8 +12,9 @@ export async function POST(request: NextRequest) {
       process.env.OPENAI_API_KEY ? '설정됨' : '❌ 설정되지 않음'
     );
 
-    const { content } = await request.json();
+    const { content, title, saveToDatabase = false } = await request.json();
     console.log('받은 내용 길이:', content?.length || 0);
+    console.log('저장 여부:', saveToDatabase);
 
     if (
       !content ||
@@ -36,9 +39,54 @@ export async function POST(request: NextRequest) {
     const generatedQuiz = await generateQuizFromContent(content);
     console.log('퀴즈 생성 완료!');
 
+    // 로그인한 사용자이고 저장 요청이 있는 경우 데이터베이스에 저장
+    let savedRecord = null;
+    if (saveToDatabase) {
+      try {
+        // 요청 헤더에서 Authorization 토큰 확인
+        const authHeader = request.headers.get('authorization');
+        if (authHeader?.startsWith('Bearer ')) {
+          const token = authHeader.split(' ')[1];
+
+          // Supabase에서 사용자 정보 확인
+          const {
+            data: { user },
+            error: userError,
+          } = await supabase.auth.getUser(token);
+
+          if (user && !userError) {
+            const quizTitle =
+              title || `퀴즈 - ${new Date().toLocaleDateString('ko-KR')}`;
+            const promptUsed = `다음 텍스트를 분석하여 요약, 핵심 포인트, 그리고 다양한 유형의 퀴즈를 생성해주세요.
+
+텍스트:
+${content}`;
+
+            const { data, error } = await saveQuizRecord(user.id, {
+              title: quizTitle,
+              original_content: content,
+              prompt_used: promptUsed,
+              generated_quiz: generatedQuiz,
+            });
+
+            if (error) {
+              console.error('퀴즈 저장 실패:', error);
+            } else {
+              savedRecord = data;
+              console.log('퀴즈 저장 성공:', data?.id);
+            }
+          }
+        }
+      } catch (dbError) {
+        console.error('데이터베이스 저장 중 오류:', dbError);
+        // 저장 실패해도 퀴즈 생성 결과는 반환
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: generatedQuiz,
+      savedRecord,
     });
   } catch (error) {
     console.error('=== 상세 오류 정보 ===');
