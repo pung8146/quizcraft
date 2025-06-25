@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateQuizFromContent } from '@/lib/openai';
-import { saveQuizRecord } from '@/lib/database';
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,17 +42,24 @@ export async function POST(request: NextRequest) {
     // 로그인한 사용자이고 저장 요청이 있는 경우 데이터베이스에 저장
     let savedRecord = null;
     if (saveToDatabase) {
+      console.log('🔄 데이터베이스 저장 시도 중...');
       try {
         // 요청 헤더에서 Authorization 토큰 확인
         const authHeader = request.headers.get('authorization');
+        console.log('Authorization 헤더 상태:', authHeader ? '존재함' : '없음');
+
         if (authHeader?.startsWith('Bearer ')) {
           const token = authHeader.split(' ')[1];
+          console.log('토큰 길이:', token.length);
 
           // Supabase에서 사용자 정보 확인
           const {
             data: { user },
             error: userError,
           } = await supabase.auth.getUser(token);
+
+          console.log('사용자 인증 결과:', user ? `성공 (${user.id})` : '실패');
+          console.log('사용자 인증 오류:', userError?.message || '없음');
 
           if (user && !userError) {
             const quizTitle =
@@ -62,25 +69,55 @@ export async function POST(request: NextRequest) {
 텍스트:
 ${content}`;
 
-            const { data, error } = await saveQuizRecord(user.id, {
+            console.log('💾 데이터베이스에 저장 중...', {
+              userId: user.id,
               title: quizTitle,
-              original_content: content,
-              prompt_used: promptUsed,
-              generated_quiz: generatedQuiz,
             });
 
+            // 사용자별 Supabase 클라이언트 생성 (RLS 정책 우회)
+            const userSupabase = createClient(
+              process.env.NEXT_PUBLIC_SUPABASE_URL!,
+              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+              {
+                global: {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                },
+              }
+            );
+
+            // 사용자별 클라이언트로 직접 삽입
+            const { data, error } = await userSupabase
+              .from('quiz_records')
+              .insert({
+                user_id: user.id,
+                title: quizTitle,
+                original_content: content,
+                prompt_used: promptUsed,
+                generated_quiz: generatedQuiz,
+              })
+              .select()
+              .single();
+
             if (error) {
-              console.error('퀴즈 저장 실패:', error);
+              console.error('❌ 퀴즈 저장 실패:', error);
             } else {
               savedRecord = data;
-              console.log('퀴즈 저장 성공:', data?.id);
+              console.log('✅ 퀴즈 저장 성공:', data?.id);
             }
+          } else {
+            console.log('⚠️ 사용자 인증 실패');
           }
+        } else {
+          console.log('⚠️ Authorization 헤더가 없거나 형식이 잘못됨');
         }
       } catch (dbError) {
-        console.error('데이터베이스 저장 중 오류:', dbError);
+        console.error('❌ 데이터베이스 저장 중 오류:', dbError);
         // 저장 실패해도 퀴즈 생성 결과는 반환
       }
+    } else {
+      console.log('ℹ️ 데이터베이스 저장 요청되지 않음');
     }
 
     return NextResponse.json({

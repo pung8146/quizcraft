@@ -157,7 +157,62 @@ interface QuizQuestion {
 3. **안전한 데이터 접근**: RLS로 사용자별 데이터 격리
 4. **자동 타임스탬프**: 생성/수정 시간 자동 관리
 
-## 7. 다음 단계
+## 7. 디버깅 및 트러블슈팅
+
+### 데이터베이스 연결 테스트
+
+브라우저에서 다음 URL로 데이터베이스 상태를 확인하세요:
+
+```
+GET /api/test-db
+```
+
+로그인한 상태에서 테스트하려면:
+
+```javascript
+// 브라우저 개발자 도구에서 실행
+const {
+  data: { session },
+} = await supabase.auth.getSession();
+if (session) {
+  const response = await fetch('/api/test-db', {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
+  const result = await response.json();
+  console.log('데이터베이스 테스트 결과:', result);
+}
+```
+
+### 저장 기능 테스트
+
+1. **로그인 확인**: 사용자가 로그인되어 있는지 확인
+2. **콘솔 로그 확인**: 브라우저 개발자 도구에서 저장 관련 로그 확인
+3. **서버 로그 확인**: 터미널에서 API 디버깅 로그 확인
+
+### 일반적인 문제와 해결 방법
+
+1. **테이블이 존재하지 않음**
+
+   - Supabase 대시보드에서 SQL이 정상 실행되었는지 확인
+   - `/api/test-db`로 테이블 존재 여부 확인
+
+2. **권한 오류 (RLS 정책)**
+
+   - Supabase 대시보드에서 RLS 정책이 활성화되었는지 확인
+   - 사용자 인증이 제대로 되고 있는지 확인
+
+3. **환경변수 문제**
+
+   - `.env.local` 파일에 올바른 Supabase URL과 키가 설정되었는지 확인
+   - 서버 재시작 후 다시 시도
+
+4. **토큰 전달 문제**
+   - 브라우저 개발자 도구 Network 탭에서 Authorization 헤더 확인
+   - 토큰이 만료되지 않았는지 확인
+
+## 8. 다음 단계
 
 - 퀴즈 수정/삭제 기능 추가
 - 퀴즈 공유 기능 구현

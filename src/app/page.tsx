@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { nanoid } from 'nanoid';
 import { useAuth } from '@/components/AuthProvider';
+import { supabase } from '@/lib/supabase';
 
 export default function HomePage() {
   const [markdown, setMarkdown] = useState('');
@@ -34,6 +35,50 @@ export default function HomePage() {
           isGuest: !user,
         })
       );
+
+      // 로그인한 사용자인 경우 즉시 퀴즈 생성하고 DB에 저장
+      if (user) {
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+
+          if (session?.access_token) {
+            const response = await fetch('/api/generate-quiz', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                content: markdown,
+                title: extractTitle(markdown),
+                saveToDatabase: true,
+              }),
+            });
+
+            const result = await response.json();
+
+            if (result.success && result.data) {
+              // 생성된 퀴즈를 localStorage에 저장
+              localStorage.setItem(
+                `quiz-${slug}-data`,
+                JSON.stringify(result.data)
+              );
+
+              if (result.savedRecord) {
+                console.log(
+                  '✅ 퀴즈가 데이터베이스에 성공적으로 저장되었습니다:',
+                  result.savedRecord.id
+                );
+              }
+            }
+          }
+        } catch (error) {
+          console.error('퀴즈 생성 및 저장 중 오류:', error);
+          // 오류가 발생해도 계속 진행 (퀴즈 페이지에서 다시 생성)
+        }
+      }
 
       router.push(`/quiz/${slug}`); // 퀴즈 페이지로 이동
     } catch (error) {

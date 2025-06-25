@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { GeneratedQuiz, QuizQuestion } from '@/lib/openai';
+import { supabase } from '@/lib/supabase';
 
 interface QuizAnswer {
   questionIndex: number;
@@ -26,6 +27,15 @@ export default function QuizPage() {
   useEffect(() => {
     loadQuizContent();
   }, [slug]);
+
+  const extractTitleFromContent = (content: string): string => {
+    const lines = content.split('\n');
+    const titleLine = lines.find((line) => line.startsWith('# '));
+    if (titleLine) {
+      return titleLine.replace('# ', '').trim();
+    }
+    return content.substring(0, 50) + (content.length > 50 ? '...' : '');
+  };
 
   const loadQuizContent = async () => {
     try {
@@ -61,12 +71,28 @@ export default function QuizPage() {
   const generateNewQuiz = async (content: string) => {
     setIsGeneratingQuiz(true);
     try {
+      // 현재 사용자 세션 확인
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // 로그인한 사용자인 경우 Authorization 헤더 추가
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch('/api/generate-quiz', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content }),
+        headers,
+        body: JSON.stringify({
+          content,
+          title: extractTitleFromContent(content),
+          saveToDatabase: !!session?.user, // 로그인한 경우에만 저장
+        }),
       });
 
       const result = await response.json();
@@ -79,6 +105,18 @@ export default function QuizPage() {
         setQuizData(result.data);
         // 생성된 퀴즈 저장
         localStorage.setItem(`quiz-${slug}-data`, JSON.stringify(result.data));
+
+        // 데이터베이스 저장 결과 로깅
+        if (result.savedRecord) {
+          console.log(
+            '✅ 퀴즈가 데이터베이스에 성공적으로 저장되었습니다:',
+            result.savedRecord.id
+          );
+        } else {
+          console.log(
+            'ℹ️ 퀴즈는 생성되었지만 데이터베이스에 저장되지 않았습니다.'
+          );
+        }
       } else {
         throw new Error('퀴즈 데이터가 올바르지 않습니다.');
       }
