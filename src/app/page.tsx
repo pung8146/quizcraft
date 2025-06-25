@@ -1,19 +1,42 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { nanoid } from 'nanoid';
-import { useAuth } from '@/components/AuthProvider';
-import { supabase } from '@/lib/supabase';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { nanoid } from "nanoid";
+import { useAuth } from "@/components/AuthProvider";
+import { supabase } from "@/lib/supabase";
+
+interface QuizOptions {
+  types: {
+    multipleChoice: boolean;
+    trueOrFalse: boolean;
+    fillInBlank: boolean;
+  };
+  questionCount: number;
+}
 
 export default function HomePage() {
-  const [markdown, setMarkdown] = useState('');
+  const [markdown, setMarkdown] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [quizOptions, setQuizOptions] = useState<QuizOptions>({
+    types: {
+      multipleChoice: true,
+      trueOrFalse: true,
+      fillInBlank: true,
+    },
+    questionCount: 5,
+  });
   const router = useRouter();
   const { user } = useAuth();
 
   const handleGenerateQuiz = async () => {
-    if (!markdown.trim()) return alert('텍스트를 입력해주세요.');
+    if (!markdown.trim()) return alert("텍스트를 입력해주세요.");
+
+    // 최소 하나의 문제 유형이 선택되어야 함
+    const selectedTypes = Object.values(quizOptions.types).some(Boolean);
+    if (!selectedTypes) {
+      return alert("최소 하나의 문제 유형을 선택해주세요.");
+    }
 
     setIsGenerating(true);
 
@@ -30,9 +53,10 @@ export default function HomePage() {
         JSON.stringify({
           createdAt,
           title: extractTitle(markdown),
-          userId: user?.id || 'guest',
+          userId: user?.id || "guest",
           userEmail: user?.email || null,
           isGuest: !user,
+          quizOptions,
         })
       );
 
@@ -44,16 +68,17 @@ export default function HomePage() {
           } = await supabase.auth.getSession();
 
           if (session?.access_token) {
-            const response = await fetch('/api/generate-quiz', {
-              method: 'POST',
+            const response = await fetch("/api/generate-quiz", {
+              method: "POST",
               headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
                 Authorization: `Bearer ${session.access_token}`,
               },
               body: JSON.stringify({
                 content: markdown,
                 title: extractTitle(markdown),
                 saveToDatabase: true,
+                quizOptions,
               }),
             });
 
@@ -68,34 +93,34 @@ export default function HomePage() {
 
               if (result.savedRecord) {
                 console.log(
-                  '✅ 퀴즈가 데이터베이스에 성공적으로 저장되었습니다:',
+                  "✅ 퀴즈가 데이터베이스에 성공적으로 저장되었습니다:",
                   result.savedRecord.id
                 );
               }
             }
           }
         } catch (error) {
-          console.error('퀴즈 생성 및 저장 중 오류:', error);
+          console.error("퀴즈 생성 및 저장 중 오류:", error);
           // 오류가 발생해도 계속 진행 (퀴즈 페이지에서 다시 생성)
         }
       }
 
       router.push(`/quiz/${slug}`); // 퀴즈 페이지로 이동
     } catch (error) {
-      console.error('퀴즈 생성 중 오류:', error);
-      alert('퀴즈 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+      console.error("퀴즈 생성 중 오류:", error);
+      alert("퀴즈 생성 중 오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setIsGenerating(false);
     }
   };
 
   const extractTitle = (content: string): string => {
-    const lines = content.split('\n');
-    const titleLine = lines.find((line) => line.startsWith('# '));
+    const lines = content.split("\n");
+    const titleLine = lines.find((line) => line.startsWith("# "));
     if (titleLine) {
-      return titleLine.replace('# ', '').trim();
+      return titleLine.replace("# ", "").trim();
     }
-    return content.substring(0, 50) + (content.length > 50 ? '...' : '');
+    return content.substring(0, 50) + (content.length > 50 ? "..." : "");
   };
 
   return (
@@ -107,7 +132,7 @@ export default function HomePage() {
             🤖 AI 퀴즈 생성기
           </h1>
           <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto mb-4">
-            어떤 텍스트든 붙여넣으면 AI가 자동으로 <strong>요약</strong>하고{' '}
+            어떤 텍스트든 붙여넣으면 AI가 자동으로 <strong>요약</strong>하고{" "}
             <strong>다양한 퀴즈</strong>를 만들어드립니다.
           </p>
           <div className="flex flex-wrap justify-center gap-2 text-xs sm:text-sm text-gray-500">
@@ -156,6 +181,106 @@ export default function HomePage() {
           )}
         </div>
 
+        {/* 퀴즈 생성 옵션 */}
+        <div className="bg-white rounded-lg border shadow-sm p-4 sm:p-6 lg:p-8 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            ⚙️ 퀴즈 생성 옵션
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* 문제 유형 선택 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                문제 유형 선택
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={quizOptions.types.multipleChoice}
+                    onChange={(e) =>
+                      setQuizOptions((prev) => ({
+                        ...prev,
+                        types: {
+                          ...prev.types,
+                          multipleChoice: e.target.checked,
+                        },
+                      }))
+                    }
+                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm text-gray-700">📝 객관식</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={quizOptions.types.trueOrFalse}
+                    onChange={(e) =>
+                      setQuizOptions((prev) => ({
+                        ...prev,
+                        types: {
+                          ...prev.types,
+                          trueOrFalse: e.target.checked,
+                        },
+                      }))
+                    }
+                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm text-gray-700">✅ O/X 문제</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={quizOptions.types.fillInBlank}
+                    onChange={(e) =>
+                      setQuizOptions((prev) => ({
+                        ...prev,
+                        types: {
+                          ...prev.types,
+                          fillInBlank: e.target.checked,
+                        },
+                      }))
+                    }
+                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm text-gray-700">🔤 빈칸 추론</span>
+                </label>
+              </div>
+            </div>
+
+            {/* 문제 개수 설정 */}
+            <div>
+              <label
+                htmlFor="question-count"
+                className="block text-sm font-medium text-gray-700 mb-3"
+              >
+                문제 개수
+              </label>
+              <div className="flex items-center space-x-2">
+                <input
+                  id="question-count"
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={quizOptions.questionCount}
+                  onChange={(e) => {
+                    const count = parseInt(e.target.value);
+                    if (!isNaN(count) && count >= 1 && count <= 20) {
+                      setQuizOptions((prev) => ({
+                        ...prev,
+                        questionCount: count,
+                      }));
+                    }
+                  }}
+                  className="w-20 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <span className="text-sm text-gray-500">개 (최대 20개)</span>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">기본값: 5개</p>
+            </div>
+          </div>
+        </div>
+
         {/* 문서 입력 섹션 */}
         <div className="bg-white rounded-lg border shadow-sm p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
           <label
@@ -190,15 +315,15 @@ export default function HomePage() {
             <div className="text-sm text-gray-500 order-2 sm:order-1">
               {markdown.length > 0
                 ? `${markdown.length}자 입력됨`
-                : '텍스트를 입력해주세요'}
+                : "텍스트를 입력해주세요"}
             </div>
             <button
               onClick={handleGenerateQuiz}
               disabled={!markdown.trim() || isGenerating}
               className={`order-1 sm:order-2 w-full sm:w-auto px-6 py-3 sm:py-2 rounded-md font-medium transition-colors ${
                 markdown.trim() && !isGenerating
-                  ? 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
               tabIndex={0}
               aria-label="AI 퀴즈 생성"
@@ -209,7 +334,7 @@ export default function HomePage() {
                   퀴즈 생성 중...
                 </>
               ) : (
-                '🤖 AI 퀴즈 생성하기 →'
+                "🤖 AI 퀴즈 생성하기 →"
               )}
             </button>
           </div>
@@ -225,7 +350,7 @@ export default function HomePage() {
               생성한 퀴즈들을 확인하고 관리하세요
             </p>
             <button
-              onClick={() => router.push('/history')}
+              onClick={() => router.push("/history")}
               className="text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
               히스토리 보기 →
@@ -241,7 +366,7 @@ export default function HomePage() {
                 로그인하고 퀴즈를 안전하게 저장하세요
               </p>
               <button
-                onClick={() => router.push('/login')}
+                onClick={() => router.push("/login")}
                 className="text-sm text-blue-600 hover:text-blue-700 font-medium"
               >
                 로그인하기 →

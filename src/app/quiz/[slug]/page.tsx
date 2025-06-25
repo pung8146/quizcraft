@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { GeneratedQuiz, QuizQuestion } from '@/lib/openai';
-import { supabase } from '@/lib/supabase';
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { GeneratedQuiz, QuizQuestion } from "@/lib/openai";
+import { supabase } from "@/lib/supabase";
 
 interface QuizAnswer {
   questionIndex: number;
@@ -18,7 +18,7 @@ export default function QuizPage() {
 
   const [quizData, setQuizData] = useState<GeneratedQuiz | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<QuizAnswer[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -29,19 +29,19 @@ export default function QuizPage() {
   }, [slug]);
 
   const extractTitleFromContent = (content: string): string => {
-    const lines = content.split('\n');
-    const titleLine = lines.find((line) => line.startsWith('# '));
+    const lines = content.split("\n");
+    const titleLine = lines.find((line) => line.startsWith("# "));
     if (titleLine) {
-      return titleLine.replace('# ', '').trim();
+      return titleLine.replace("# ", "").trim();
     }
-    return content.substring(0, 50) + (content.length > 50 ? '...' : '');
+    return content.substring(0, 50) + (content.length > 50 ? "..." : "");
   };
 
   const loadQuizContent = async () => {
     try {
       const content = localStorage.getItem(`quiz-${slug}`);
       if (!content) {
-        setError('퀴즈를 찾을 수 없습니다.');
+        setError("퀴즈를 찾을 수 없습니다.");
         return;
       }
 
@@ -54,15 +54,15 @@ export default function QuizPage() {
           setIsLoading(false);
           return;
         } catch (error) {
-          console.error('기존 퀴즈 데이터 파싱 오류:', error);
+          console.error("기존 퀴즈 데이터 파싱 오류:", error);
         }
       }
 
       // 새로운 퀴즈 생성
       await generateNewQuiz(content);
     } catch (error) {
-      console.error('퀴즈 로드 오류:', error);
-      setError('퀴즈를 로드하는 중 오류가 발생했습니다.');
+      console.error("퀴즈 로드 오류:", error);
+      setError("퀴즈를 로드하는 중 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);
     }
@@ -71,13 +71,25 @@ export default function QuizPage() {
   const generateNewQuiz = async (content: string) => {
     setIsGeneratingQuiz(true);
     try {
+      // 메타데이터에서 퀴즈 옵션 가져오기
+      const metaData = localStorage.getItem(`quiz-${slug}-meta`);
+      let quizOptions = null;
+      if (metaData) {
+        try {
+          const parsedMeta = JSON.parse(metaData);
+          quizOptions = parsedMeta.quizOptions;
+        } catch (error) {
+          console.warn("메타데이터 파싱 오류:", error);
+        }
+      }
+
       // 현재 사용자 세션 확인
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       };
 
       // 로그인한 사용자인 경우 Authorization 헤더 추가
@@ -85,20 +97,21 @@ export default function QuizPage() {
         headers.Authorization = `Bearer ${session.access_token}`;
       }
 
-      const response = await fetch('/api/generate-quiz', {
-        method: 'POST',
+      const response = await fetch("/api/generate-quiz", {
+        method: "POST",
         headers,
         body: JSON.stringify({
           content,
           title: extractTitleFromContent(content),
           saveToDatabase: !!session?.user, // 로그인한 경우에만 저장
+          quizOptions, // 퀴즈 옵션 추가
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || '퀴즈 생성에 실패했습니다.');
+        throw new Error(result.error || "퀴즈 생성에 실패했습니다.");
       }
 
       if (result.success && result.data) {
@@ -109,23 +122,23 @@ export default function QuizPage() {
         // 데이터베이스 저장 결과 로깅
         if (result.savedRecord) {
           console.log(
-            '✅ 퀴즈가 데이터베이스에 성공적으로 저장되었습니다:',
+            "✅ 퀴즈가 데이터베이스에 성공적으로 저장되었습니다:",
             result.savedRecord.id
           );
         } else {
           console.log(
-            'ℹ️ 퀴즈는 생성되었지만 데이터베이스에 저장되지 않았습니다.'
+            "ℹ️ 퀴즈는 생성되었지만 데이터베이스에 저장되지 않았습니다."
           );
         }
       } else {
-        throw new Error('퀴즈 데이터가 올바르지 않습니다.');
+        throw new Error("퀴즈 데이터가 올바르지 않습니다.");
       }
     } catch (error) {
-      console.error('퀴즈 생성 오류:', error);
+      console.error("퀴즈 생성 오류:", error);
       setError(
         error instanceof Error
           ? error.message
-          : '퀴즈 생성 중 오류가 발생했습니다.'
+          : "퀴즈 생성 중 오류가 발생했습니다."
       );
     } finally {
       setIsGeneratingQuiz(false);
@@ -182,7 +195,7 @@ export default function QuizPage() {
     const userAnswer = userAnswers.find((a) => a.questionIndex === index);
 
     switch (question.type) {
-      case 'multiple-choice':
+      case "multiple-choice":
         return (
           <div className="space-y-4">
             <h3 className="text-xl font-semibold text-gray-900 mb-4">
@@ -195,8 +208,8 @@ export default function QuizPage() {
                   onClick={() => handleAnswer(optionIndex)}
                   className={`w-full text-left p-4 rounded-lg border-2 transition-colors ${
                     userAnswer?.answer === optionIndex
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                   }`}
                 >
                   {optionIndex + 1}. {option}
@@ -206,7 +219,7 @@ export default function QuizPage() {
           </div>
         );
 
-      case 'true-false':
+      case "true-false":
         return (
           <div className="space-y-4">
             <h3 className="text-xl font-semibold text-gray-900 mb-4">
@@ -217,8 +230,8 @@ export default function QuizPage() {
                 onClick={() => handleAnswer(true)}
                 className={`flex-1 p-4 rounded-lg border-2 transition-colors ${
                   userAnswer?.answer === true
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    ? "border-green-500 bg-green-50"
+                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                 }`}
               >
                 참 (True)
@@ -227,8 +240,8 @@ export default function QuizPage() {
                 onClick={() => handleAnswer(false)}
                 className={`flex-1 p-4 rounded-lg border-2 transition-colors ${
                   userAnswer?.answer === false
-                    ? 'border-red-500 bg-red-50'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                 }`}
               >
                 거짓 (False)
@@ -237,7 +250,7 @@ export default function QuizPage() {
           </div>
         );
 
-      case 'fill-in-the-blank':
+      case "fill-in-the-blank":
         return (
           <div className="space-y-4">
             <h3 className="text-xl font-semibold text-gray-900 mb-4">
@@ -245,7 +258,7 @@ export default function QuizPage() {
             </h3>
             <input
               type="text"
-              value={(userAnswer?.answer as string) || ''}
+              value={(userAnswer?.answer as string) || ""}
               onChange={(e) => handleAnswer(e.target.value)}
               className="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
               placeholder="답을 입력해주세요..."
@@ -273,8 +286,8 @@ export default function QuizPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">
             {isGeneratingQuiz
-              ? 'AI가 퀴즈를 생성하고 있습니다...'
-              : '로딩 중...'}
+              ? "AI가 퀴즈를 생성하고 있습니다..."
+              : "로딩 중..."}
           </p>
         </div>
       </div>
@@ -291,7 +304,7 @@ export default function QuizPage() {
           </h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push("/")}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             홈으로 돌아가기
@@ -323,16 +336,16 @@ export default function QuizPage() {
               <div
                 className={`text-6xl font-bold mb-4 ${
                   score >= 80
-                    ? 'text-green-600'
+                    ? "text-green-600"
                     : score >= 60
-                    ? 'text-yellow-600'
-                    : 'text-red-600'
+                    ? "text-yellow-600"
+                    : "text-red-600"
                 }`}
               >
                 {score}점
               </div>
               <p className="text-gray-600">
-                총 {quizData.questions.length}문제 중{' '}
+                총 {quizData.questions.length}문제 중{" "}
                 {userAnswers.filter((a) => a.isCorrect).length}문제 정답
               </p>
             </div>
@@ -347,7 +360,7 @@ export default function QuizPage() {
                     <div className="flex items-center mb-2">
                       <span
                         className={`text-2xl mr-2 ${
-                          userAnswer?.isCorrect ? '✅' : '❌'
+                          userAnswer?.isCorrect ? "✅" : "❌"
                         }`}
                       ></span>
                       <span className="font-semibold">문제 {index + 1}</span>
@@ -371,7 +384,7 @@ export default function QuizPage() {
                 다시 풀기
               </button>
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push("/")}
                 className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
               >
                 새 퀴즈 만들기
@@ -446,8 +459,8 @@ export default function QuizPage() {
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {currentQuestionIndex === quizData.questions.length - 1
-                ? '결과 보기'
-                : '다음 문제'}
+                ? "결과 보기"
+                : "다음 문제"}
             </button>
           </div>
         </div>
