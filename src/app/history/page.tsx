@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { getUserQuizRecords, QuizRecord } from '@/lib/database';
 
 interface QuizItem {
   id: string;
   content: string;
   createdAt: string;
   title: string;
+  tag?: string;
 }
 
 export default function HistoryPage() {
@@ -19,29 +21,59 @@ export default function HistoryPage() {
 
   useEffect(() => {
     loadQuizHistory();
-  }, []);
+  }, [user]);
 
-  const loadQuizHistory = () => {
+  const loadQuizHistory = async () => {
     try {
-      const history: QuizItem[] = [];
+      setIsLoading(true);
+      let history: QuizItem[] = [];
 
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key?.startsWith('quiz-')) {
-          const content = localStorage.getItem(key);
-          if (content) {
-            const id = key.replace('quiz-', '');
-            const title = extractTitle(content);
-            const createdAt = getCreatedDate(key);
+      // 로그인한 사용자는 데이터베이스에서 로드
+      if (user) {
+        console.log('🔄 데이터베이스에서 퀴즈 히스토리 로드 중...');
+        const { data: dbRecords, error } = await getUserQuizRecords(
+          user.id,
+          50
+        );
 
-            history.push({
-              id,
-              content,
-              createdAt,
-              title,
-            });
+        if (!error && dbRecords) {
+          history = dbRecords.map((record: QuizRecord) => ({
+            id: record.id,
+            title: record.title,
+            tag: record.tag,
+            content: record.original_content,
+            createdAt: record.created_at,
+          }));
+          console.log(`✅ 데이터베이스에서 ${history.length}개 퀴즈 로드됨`);
+        } else {
+          console.error('❌ 데이터베이스 로드 실패:', error);
+        }
+      }
+
+      // 게스트 사용자나 데이터베이스 로드 실패시 localStorage에서 로드
+      if (!user || history.length === 0) {
+        console.log('🔄 로컬스토리지에서 퀴즈 히스토리 로드 중...');
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key?.startsWith('quiz-')) {
+            const content = localStorage.getItem(key);
+            if (content) {
+              const id = key.replace('quiz-', '');
+              const title = extractTitle(content);
+              const createdAt = getCreatedDate(key);
+              const tag = getTagFromLocalStorage(key);
+
+              history.push({
+                id,
+                content,
+                createdAt,
+                title,
+                tag,
+              });
+            }
           }
         }
+        console.log(`✅ 로컬스토리지에서 ${history.length}개 퀴즈 로드됨`);
       }
 
       // 생성일 기준 최신순 정렬
@@ -85,6 +117,19 @@ export default function HistoryPage() {
     return now;
   };
 
+  const getTagFromLocalStorage = (key: string): string | undefined => {
+    const saved = localStorage.getItem(`${key}-meta`);
+    if (saved) {
+      try {
+        const meta = JSON.parse(saved);
+        return meta.tag;
+      } catch {
+        // 메타데이터가 없거나 파싱 실패시 undefined 반환
+      }
+    }
+    return undefined;
+  };
+
   const handleViewQuiz = (id: string) => {
     router.push(`/quiz/${id}`);
   };
@@ -116,6 +161,25 @@ export default function HistoryPage() {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  // 태그 스타일 함수
+  const getTagStyle = (tag?: string) => {
+    if (!tag) return '';
+
+    const tagStyles: { [key: string]: string } = {
+      상식: 'bg-green-100 text-green-800',
+      기술: 'bg-blue-100 text-blue-800',
+      건강: 'bg-pink-100 text-pink-800',
+      교육: 'bg-purple-100 text-purple-800',
+      생활: 'bg-yellow-100 text-yellow-800',
+      경제: 'bg-red-100 text-red-800',
+      과학: 'bg-indigo-100 text-indigo-800',
+      역사: 'bg-orange-100 text-orange-800',
+      문화: 'bg-teal-100 text-teal-800',
+    };
+
+    return tagStyles[tag] || 'bg-gray-100 text-gray-800';
   };
 
   if (isLoading) {
@@ -157,12 +221,12 @@ export default function HistoryPage() {
               <span className="font-medium">
                 {user.user_metadata?.name || user.email}
               </span>
-              님의 퀴즈 히스토리
+              님의 퀴즈 히스토리 ({quizHistory.length}개)
             </p>
           ) : (
             <p className="text-blue-800">
               <span className="font-medium">게스트</span> 사용자의 로컬 퀴즈
-              히스토리
+              히스토리 ({quizHistory.length}개)
               <span className="block text-sm text-blue-600 mt-1">
                 로그인하시면 클라우드에 안전하게 저장됩니다.
               </span>
@@ -200,16 +264,42 @@ export default function HistoryPage() {
                 <div className="flex flex-col space-y-4">
                   {/* 퀴즈 정보 */}
                   <div className="flex-1">
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 line-clamp-2">
-                      {quiz.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 mb-3">
-                      생성일: {formatDate(quiz.createdAt)}
-                    </p>
-                    <div className="text-gray-600 text-sm line-clamp-3">
-                      <div className="bg-gray-50 p-3 rounded border text-xs font-mono overflow-hidden">
-                        {quiz.content.substring(0, 150)}
-                        {quiz.content.length > 150 && '...'}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 line-clamp-2">
+                          {quiz.title}
+                        </h3>
+                        {quiz.tag && (
+                          <span
+                            className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getTagStyle(
+                              quiz.tag
+                            )}`}
+                          >
+                            📂 {quiz.tag}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-500 mb-2">
+                        📅 생성일: {formatDate(quiz.createdAt)}
+                      </p>
+                      <p className="text-sm text-gray-600 font-medium">
+                        📄 원본 문서 미리보기:
+                      </p>
+                    </div>
+
+                    <div className="text-gray-600 text-sm">
+                      <div className="bg-gray-50 p-4 rounded-lg border text-sm leading-relaxed overflow-hidden">
+                        <div className="font-mono text-xs text-gray-500 mb-2">
+                          {quiz.content.substring(0, 200)}
+                          {quiz.content.length > 200 && '...'}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-200">
+                          총 {quiz.content.length}자 · 이 문서로 퀴즈가
+                          생성되었습니다
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -10,6 +10,7 @@ CREATE TABLE quiz_records (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   title VARCHAR(255) NOT NULL,
+  tag VARCHAR(50), -- 태그 필드 추가 (선택사항)
   original_content TEXT NOT NULL,
   prompt_used TEXT NOT NULL,
   generated_quiz JSONB NOT NULL,
@@ -20,6 +21,7 @@ CREATE TABLE quiz_records (
 -- 인덱스 생성 (성능 최적화)
 CREATE INDEX idx_quiz_records_user_id ON quiz_records(user_id);
 CREATE INDEX idx_quiz_records_created_at ON quiz_records(created_at);
+CREATE INDEX idx_quiz_records_tag ON quiz_records(tag); -- 태그 인덱스 추가
 
 -- Row Level Security (RLS) 활성화
 ALTER TABLE quiz_records ENABLE ROW LEVEL SECURITY;
@@ -58,6 +60,19 @@ CREATE TRIGGER update_quiz_records_updated_at
   BEFORE UPDATE ON quiz_records
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
+```
+
+## 1-1. 기존 테이블에 태그 컬럼 추가 (이미 테이블이 있는 경우)
+
+만약 기존에 `quiz_records` 테이블이 있다면, 다음 SQL로 태그 컬럼을 추가하세요:
+
+```sql
+-- 기존 테이블에 태그 컬럼 추가
+ALTER TABLE quiz_records
+ADD COLUMN tag VARCHAR(50);
+
+-- 태그 컬럼에 인덱스 추가 (성능 최적화)
+CREATE INDEX idx_quiz_records_tag ON quiz_records(tag);
 ```
 
 ## 2. 환경변수 설정
