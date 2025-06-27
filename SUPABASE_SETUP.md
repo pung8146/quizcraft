@@ -4,6 +4,8 @@
 
 Supabase 프로젝트 대시보드에서 SQL Editor로 이동하여 다음 SQL을 실행하세요:
 
+### 1-1. 퀴즈 기록 테이블
+
 ```sql
 -- 퀴즈 생성 기록을 저장할 테이블 생성
 CREATE TABLE quiz_records (
@@ -62,7 +64,54 @@ CREATE TRIGGER update_quiz_records_updated_at
   EXECUTE FUNCTION update_updated_at_column();
 ```
 
-## 1-1. 기존 테이블에 태그 컬럼 추가 (이미 테이블이 있는 경우)
+### 1-2. 문의게시판 테이블
+
+```sql
+-- 문의게시판 테이블 생성
+CREATE TABLE inquiries (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL, -- 로그인 사용자의 경우 (NULL 허용)
+  author_name VARCHAR(100) NOT NULL, -- 작성자 이름 (게스트용)
+  email VARCHAR(255), -- 연락처 이메일 (선택사항)
+  title VARCHAR(255) NOT NULL, -- 문의 제목
+  content TEXT NOT NULL, -- 문의 내용
+  is_public BOOLEAN DEFAULT true, -- 공개 여부
+  status VARCHAR(20) DEFAULT 'pending', -- 상태: pending, answered, closed
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 인덱스 생성 (성능 최적화)
+CREATE INDEX idx_inquiries_created_at ON inquiries(created_at);
+CREATE INDEX idx_inquiries_status ON inquiries(status);
+CREATE INDEX idx_inquiries_user_id ON inquiries(user_id);
+
+-- Row Level Security (RLS) 활성화
+ALTER TABLE inquiries ENABLE ROW LEVEL SECURITY;
+
+-- 정책 생성: 모든 사용자가 문의 작성 가능
+CREATE POLICY "Anyone can insert inquiries"
+  ON inquiries FOR INSERT
+  WITH CHECK (true);
+
+-- 정책 생성: 공개된 문의는 모든 사용자가 조회 가능
+CREATE POLICY "Anyone can view public inquiries"
+  ON inquiries FOR SELECT
+  USING (is_public = true);
+
+-- 정책 생성: 작성자는 자신의 문의 조회 가능 (비공개 포함)
+CREATE POLICY "Authors can view their own inquiries"
+  ON inquiries FOR SELECT
+  USING (auth.uid() = user_id);
+
+-- updated_at 트리거 생성 (위에서 생성한 함수 재사용)
+CREATE TRIGGER update_inquiries_updated_at
+  BEFORE UPDATE ON inquiries
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+```
+
+## 1-3. 기존 테이블에 태그 컬럼 추가 (이미 테이블이 있는 경우)
 
 만약 기존에 `quiz_records` 테이블이 있다면, 다음 SQL로 태그 컬럼을 추가하세요:
 
