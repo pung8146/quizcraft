@@ -55,13 +55,26 @@ export default function HistoryPage() {
         console.log('🔄 로컬스토리지에서 퀴즈 히스토리 로드 중...');
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
-          if (key?.startsWith('quiz-')) {
+          if (
+            key?.startsWith('quiz-') &&
+            !key.includes('-meta') &&
+            !key.includes('-data')
+          ) {
             const content = localStorage.getItem(key);
             if (content) {
               const id = key.replace('quiz-', '');
-              const title = extractTitle(content);
-              const createdAt = getCreatedDate(key);
-              const tag = getTagFromLocalStorage(key);
+
+              // 메타데이터에서 제목 우선 추출
+              const metaData = getMetaFromLocalStorage(key);
+              let title = metaData?.title;
+
+              // 메타데이터에 제목이 없으면 content에서 추출
+              if (!title) {
+                title = extractTitleFromContent(content);
+              }
+
+              const createdAt = metaData?.createdAt || getCreatedDate(key);
+              const tag = metaData?.tag;
 
               history.push({
                 id,
@@ -89,13 +102,41 @@ export default function HistoryPage() {
     }
   };
 
-  const extractTitle = (content: string): string => {
+  const extractTitleFromContent = (content: string): string => {
+    try {
+      // URL 타입인지 확인 (JSON 형태로 저장된 경우)
+      const parsedContent = JSON.parse(content);
+      if (parsedContent.type === 'url') {
+        // sourceInfo에서 제목 추출 시도
+        return (
+          parsedContent.sourceInfo?.originalTitle ||
+          parsedContent.url ||
+          'URL 퀴즈'
+        );
+      }
+    } catch {
+      // JSON 파싱 실패시 일반 텍스트로 처리
+    }
+
+    // 일반 마크다운 텍스트에서 제목 추출
     const lines = content.split('\n');
     const titleLine = lines.find((line) => line.startsWith('# '));
     if (titleLine) {
       return titleLine.replace('# ', '').trim();
     }
     return content.substring(0, 50) + (content.length > 50 ? '...' : '');
+  };
+
+  const getMetaFromLocalStorage = (key: string) => {
+    const saved = localStorage.getItem(`${key}-meta`);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    return null;
   };
 
   const getCreatedDate = (key: string): string => {
@@ -115,19 +156,6 @@ export default function HistoryPage() {
     const now = new Date().toISOString();
     localStorage.setItem(`${key}-meta`, JSON.stringify({ createdAt: now }));
     return now;
-  };
-
-  const getTagFromLocalStorage = (key: string): string | undefined => {
-    const saved = localStorage.getItem(`${key}-meta`);
-    if (saved) {
-      try {
-        const meta = JSON.parse(saved);
-        return meta.tag;
-      } catch {
-        // 메타데이터가 없거나 파싱 실패시 undefined 반환
-      }
-    }
-    return undefined;
   };
 
   const handleViewQuiz = (id: string) => {

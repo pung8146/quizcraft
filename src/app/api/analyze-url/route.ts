@@ -81,24 +81,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2단계: 자동 제목 및 태그 생성 (기존 제목이 없거나 자동 생성 요청시)
+    // 2단계: 내용 기반 제목 및 태그 생성 (원본 제목보다 내용을 우선시)
     let finalTitle = urlResult.title;
     let tag = '';
 
     if (autoGenerateTitle) {
-      console.log('🤖 2단계: 자동 제목/태그 생성 중...');
+      console.log('🤖 2단계: 내용 기반 제목/태그 생성 중...');
+      console.log('📄 원본 제목:', urlResult.title);
       try {
         const titleAndTag = await generateTitleAndTag(urlResult.content);
-        finalTitle = titleAndTag.title;
-        tag = titleAndTag.tag;
-        console.log('✅ 생성된 제목:', finalTitle);
-        console.log('✅ 생성된 태그:', tag);
+
+        // AI가 생성한 제목이 있고 의미있는 길이라면 사용
+        if (titleAndTag.title && titleAndTag.title.trim().length >= 10) {
+          finalTitle = titleAndTag.title;
+          tag = titleAndTag.tag;
+          console.log('✅ AI 생성 제목:', finalTitle);
+          console.log('✅ 생성된 태그:', tag);
+          console.log('🔄 제목 변경: 원본 → AI 생성');
+        } else {
+          throw new Error('생성된 제목이 너무 짧거나 부적절합니다.');
+        }
       } catch (titleError) {
-        console.error('⚠️ 제목/태그 생성 실패, 기본값 사용:', titleError);
+        console.error(
+          '⚠️ 제목/태그 생성 실패, 원본 제목 기반으로 폴백:',
+          titleError
+        );
+        // 원본 제목이 있으면 사용, 없으면 날짜 기반
         finalTitle =
-          urlResult.title || `퀴즈 - ${new Date().toLocaleDateString('ko-KR')}`;
-        tag = '일반';
+          urlResult.title ||
+          `웹페이지 퀴즈 - ${new Date().toLocaleDateString('ko-KR')}`;
+        tag = '웹페이지';
       }
+    } else {
+      // 자동 생성이 비활성화된 경우에도 기본 태그는 설정
+      tag = '웹페이지';
     }
 
     // 3단계: 퀴즈 생성
