@@ -168,7 +168,7 @@ export default function InquiryPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-6 min-h-screen bg-gray-50">
       {/* 헤더 */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -179,7 +179,7 @@ export default function InquiryPage() {
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
         >
           {showForm ? '목록보기' : '문의하기'}
         </button>
@@ -187,7 +187,7 @@ export default function InquiryPage() {
 
       {/* 문의 작성 폼 */}
       {showForm && (
-        <div className="bg-white border rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-8 mb-8">
           <h2 className="text-xl font-semibold mb-4">새 문의 작성</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -208,7 +208,7 @@ export default function InquiryPage() {
                       author_name: e.target.value,
                     }))
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors"
                   required
                 />
               </div>
@@ -226,7 +226,7 @@ export default function InquiryPage() {
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, email: e.target.value }))
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors"
                 />
               </div>
             </div>
@@ -245,7 +245,7 @@ export default function InquiryPage() {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, title: e.target.value }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors"
                 required
               />
             </div>
@@ -264,7 +264,7 @@ export default function InquiryPage() {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, content: e.target.value }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors resize-vertical"
                 required
               />
             </div>
@@ -294,14 +294,14 @@ export default function InquiryPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-md hover:shadow-lg font-medium"
               >
                 {submitting ? '등록중...' : '문의 등록'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                className="bg-white border border-gray-300 text-gray-700 px-8 py-3 rounded-lg hover:bg-gray-50 transition-colors shadow-md hover:shadow-lg font-medium"
               >
                 취소
               </button>
@@ -325,7 +325,7 @@ export default function InquiryPage() {
           inquiries.map((inquiry) => (
             <div
               key={inquiry.id}
-              className="bg-white border rounded-lg shadow-sm p-6"
+              className="bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition-shadow p-6"
             >
               <div className="flex justify-between items-start mb-2">
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -364,7 +364,7 @@ export default function InquiryPage() {
             <button
               onClick={() => fetchInquiries(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50 transition-colors"
             >
               이전
             </button>
@@ -373,10 +373,10 @@ export default function InquiryPage() {
               <button
                 key={page}
                 onClick={() => fetchInquiries(page)}
-                className={`px-3 py-2 rounded-md ${
+                className={`px-4 py-2 rounded-lg transition-colors ${
                   page === currentPage
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? 'bg-blue-600 text-white border border-blue-600'
+                    : 'bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300'
                 }`}
               >
                 {page}
@@ -386,7 +386,7 @@ export default function InquiryPage() {
             <button
               onClick={() => fetchInquiries(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50 transition-colors"
             >
               다음
             </button>
