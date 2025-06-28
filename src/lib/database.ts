@@ -5,6 +5,7 @@ export interface QuizRecord {
   id: string;
   user_id: string;
   title: string;
+  tag?: string;
   original_content: string;
   prompt_used: string;
   generated_quiz: GeneratedQuiz;
@@ -14,6 +15,7 @@ export interface QuizRecord {
 
 export interface CreateQuizRecordData {
   title: string;
+  tag?: string;
   original_content: string;
   prompt_used: string;
   generated_quiz: GeneratedQuiz;
@@ -32,6 +34,7 @@ export async function saveQuizRecord(
       .insert({
         user_id: userId,
         title: quizData.title,
+        tag: quizData.tag,
         original_content: quizData.original_content,
         prompt_used: quizData.prompt_used,
         generated_quiz: quizData.generated_quiz,

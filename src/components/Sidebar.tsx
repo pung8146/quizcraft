@@ -93,6 +93,29 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
             </Link>
           </li>
 
+          {/* 문의게시판 - 모든 사용자가 접근 가능 */}
+          <li>
+            <Link
+              href="/inquiry"
+              className={`flex items-center p-2 rounded-lg ${
+                pathname === '/inquiry'
+                  ? activeLinkClasses
+                  : inactiveLinkClasses
+              }`}
+            >
+              <svg
+                className="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+              </svg>
+              <span className="ml-3">문의게시판</span>
+            </Link>
+          </li>
+
           {/* 마이페이지 - 로그인한 사용자만 */}
           {user && (
             <li>
