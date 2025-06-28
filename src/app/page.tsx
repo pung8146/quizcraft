@@ -125,31 +125,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto py-6 sm:py-8 lg:py-12">
+      <div className="max-w-4xl mx-auto ">
         {/* 헤더 섹션 */}
-        <div className="text-center mb-8 sm:mb-10 lg:mb-12">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 text-gray-900">
-            🤖 AI 퀴즈 생성기
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto mb-4">
-            어떤 텍스트든 붙여넣으면 AI가 자동으로 <strong>요약</strong>하고{" "}
-            <strong>다양한 퀴즈</strong>를 만들어드립니다.
-          </p>
-          <div className="flex flex-wrap justify-center gap-2 text-xs sm:text-sm text-gray-500">
-            <span className="bg-gray-100 px-3 py-1 rounded-full">
-              📝 객관식
-            </span>
-            <span className="bg-gray-100 px-3 py-1 rounded-full">
-              ✅ O/X 문제
-            </span>
-            <span className="bg-gray-100 px-3 py-1 rounded-full">
-              🔤 빈칸 추론
-            </span>
-            <span className="bg-gray-100 px-3 py-1 rounded-full">
-              📊 자동 요약
-            </span>
-          </div>
-        </div>
 
         {/* 사용자 상태 안내 */}
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -276,7 +253,6 @@ export default function HomePage() {
                 />
                 <span className="text-sm text-gray-500">개 (최대 20개)</span>
               </div>
-              <p className="text-xs text-gray-400 mt-1">기본값: 5개</p>
             </div>
           </div>
         </div>
