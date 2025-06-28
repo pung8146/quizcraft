@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
-import type { User } from '@supabase/supabase-js';
-import { useAuth } from './AuthProvider';
-import { supabase } from '@/lib/supabase';
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import type { User } from "@supabase/supabase-js";
+import { useAuth } from "./AuthProvider";
+import { supabase } from "@/lib/supabase";
 
 interface SidebarProps {
   isMobileMenuOpen: boolean;
@@ -27,18 +27,18 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
     try {
       await signOut();
     } catch (error) {
-      console.error('로그아웃 오류:', error);
+      console.error("로그아웃 오류:", error);
     }
   };
 
-  const activeLinkClasses = 'bg-blue-100 text-blue-700';
+  const activeLinkClasses = "bg-blue-100 text-blue-700";
   const inactiveLinkClasses =
-    'text-gray-600 hover:text-blue-600 hover:bg-gray-50';
+    "text-gray-600 hover:text-blue-600 hover:bg-gray-50";
 
   return (
     <aside
       className={`fixed top-0 left-0 z-40 w-64 h-screen bg-white border-r transition-transform md:translate-x-0 ${
-        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
       <div className="h-full px-3 py-4 overflow-y-auto">
@@ -54,7 +54,7 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
             <Link
               href="/"
               className={`flex items-center p-2 rounded-lg ${
-                pathname === '/' ? activeLinkClasses : inactiveLinkClasses
+                pathname === "/" ? activeLinkClasses : inactiveLinkClasses
               }`}
             >
               <svg
@@ -75,7 +75,7 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
             <Link
               href="/history"
               className={`flex items-center p-2 rounded-lg ${
-                pathname === '/history'
+                pathname === "/history"
                   ? activeLinkClasses
                   : inactiveLinkClasses
               }`}
@@ -98,7 +98,7 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
             <Link
               href="/inquiry"
               className={`flex items-center p-2 rounded-lg ${
-                pathname === '/inquiry'
+                pathname === "/inquiry"
                   ? activeLinkClasses
                   : inactiveLinkClasses
               }`}
@@ -122,7 +122,7 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
               <Link
                 href="/mypage"
                 className={`flex items-center p-2 rounded-lg ${
-                  pathname === '/mypage'
+                  pathname === "/mypage"
                     ? activeLinkClasses
                     : inactiveLinkClasses
                 }`}
@@ -142,21 +142,15 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
           )}
         </ul>
 
-        {/* 게스트 사용자를 위한 안내 */}
+        {/* 게스트 사용자를 위한 간단한 안내 */}
         {!user && (
-          <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800 mb-2">
-              💡 <strong>게스트 모드</strong>
-            </p>
-            <p className="text-xs text-blue-600 mb-3">
-              퀴즈는 브라우저에 임시 저장됩니다. 로그인하시면 안전하게
-              클라우드에 저장할 수 있습니다.
-            </p>
+          <div className="mt-8">
             <Link
               href="/login"
-              className="text-xs text-blue-600 hover:text-blue-800 underline"
+              className="flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors"
             >
-              로그인하기 →
+              <span className="mr-2">🔐</span>
+              로그인하기
             </Link>
           </div>
         )}

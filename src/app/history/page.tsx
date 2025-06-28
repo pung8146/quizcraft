@@ -268,24 +268,20 @@ export default function HistoryPage() {
           )}
         </div>
 
-        {/* 사용자 상태 표시 */}
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          {user ? (
-            <p className="text-blue-800">
-              <span className="font-medium">
-                {user.user_metadata?.name || user.email}
-              </span>
-              님의 퀴즈 히스토리 ({quizHistory.length}개)
-            </p>
-          ) : (
-            <p className="text-blue-800">
-              <span className="font-medium">게스트</span> 사용자의 로컬 퀴즈
-              히스토리 ({quizHistory.length}개)
-              <span className="block text-sm text-blue-600 mt-1">
-                로그인하시면 클라우드에 안전하게 저장됩니다.
-              </span>
-            </p>
-          )}
+        {/* 간단한 히스토리 정보 */}
+        <div className="mb-6 text-gray-600">
+          <p>
+            {user ? (
+              <>
+                <span className="font-medium">클라우드 + 로컬</span> 퀴즈
+              </>
+            ) : (
+              <>
+                <span className="font-medium">로컬</span> 퀴즈
+              </>
+            )}
+            총 {quizHistory.length}개
+          </p>
         </div>
 
         {quizHistory.length === 0 ? (

@@ -251,36 +251,6 @@ export default function HomePage() {
         {/* 헤더 섹션 */}
         <div className="text-center mb-8 sm:mb-10 lg:mb-12"></div>
 
-        {/* 사용자 상태 안내 */}
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          {user ? (
-            <div className="flex items-center space-x-2">
-              <span className="text-blue-600">👤</span>
-              <p className="text-blue-800">
-                <span className="font-medium">
-                  {user.user_metadata?.name || user.email}
-                </span>
-                님, 환영합니다!
-                <span className="block text-sm text-blue-600 mt-1">
-                  생성한 퀴즈는 클라우드에 안전하게 저장됩니다.
-                </span>
-              </p>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-2">
-              <span className="text-blue-600">🌐</span>
-              <p className="text-blue-800">
-                <span className="font-medium">게스트 모드</span>로 이용
-                중입니다.
-                <span className="block text-sm text-blue-600 mt-1">
-                  퀴즈는 브라우저에 임시 저장됩니다. 로그인하시면 안전하게
-                  클라우드에 저장할 수 있습니다.
-                </span>
-              </p>
-            </div>
-          )}
-        </div>
-
         {/* 퀴즈 생성 옵션 */}
         <div className="bg-white rounded-lg border shadow-sm p-4 sm:p-6 lg:p-8 mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
