@@ -16,9 +16,7 @@ interface QuizOptions {
 }
 
 export default function HomePage() {
-  const [markdown, setMarkdown] = useState("");
-  const [url, setUrl] = useState("");
-  const [inputMode, setInputMode] = useState<"text" | "url">("text");
+  const [content, setContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [quizOptions, setQuizOptions] = useState<QuizOptions>({
     types: {
@@ -31,19 +29,26 @@ export default function HomePage() {
   const router = useRouter();
   const { user } = useAuth();
 
+  // URL 여부를 판단하는 헬퍼 함수
+  const isValidUrl = (text: string): boolean => {
+    try {
+      const trimmedText = text.trim();
+      // URL 패턴 체크
+      const urlPattern = /^https?:\/\/.+/i;
+      if (!urlPattern.test(trimmedText)) return false;
+
+      // URL 생성자로 유효성 검증
+      new URL(trimmedText);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const handleGenerateQuiz = async () => {
     // 입력 검증
-    if (inputMode === "text") {
-      if (!markdown.trim()) return alert("텍스트를 입력해주세요.");
-    } else {
-      if (!url.trim()) return alert("URL을 입력해주세요.");
-
-      // URL 유효성 검증
-      try {
-        new URL(url);
-      } catch {
-        return alert("올바른 URL을 입력해주세요.");
-      }
+    if (!content.trim()) {
+      return alert("내용을 입력해주세요.");
     }
 
     // 최소 하나의 문제 유형이 선택되어야 함
@@ -51,6 +56,9 @@ export default function HomePage() {
     if (!selectedTypes) {
       return alert("최소 하나의 문제 유형을 선택해주세요.");
     }
+
+    const trimmedContent = content.trim();
+    const isUrl = isValidUrl(trimmedContent);
 
     setIsGenerating(true);
 
@@ -61,14 +69,8 @@ export default function HomePage() {
       let contentToProcess = "";
       let titleToUse = "";
 
-      if (inputMode === "text") {
-        contentToProcess = markdown;
-        titleToUse = extractTitle(markdown);
-
-        // 텍스트 내용 저장
-        localStorage.setItem(`quiz-${slug}`, markdown);
-      } else {
-        // URL 모드인 경우 먼저 URL 분석
+      if (isUrl) {
+        // URL 모드인 경우 URL 분석
         console.log("🔍 URL 분석 중...");
 
         const {
@@ -84,7 +86,7 @@ export default function HomePage() {
             }),
           },
           body: JSON.stringify({
-            url: url.trim(),
+            url: trimmedContent,
             saveToDatabase: !!user,
             quizOptions,
             autoGenerateTitle: true,
@@ -114,7 +116,7 @@ export default function HomePage() {
           `quiz-${slug}`,
           JSON.stringify({
             type: "url",
-            url: url.trim(),
+            url: trimmedContent,
             content: contentToProcess,
             sourceInfo: result.sourceInfo,
           })
@@ -137,7 +139,7 @@ export default function HomePage() {
             userEmail: user?.email || null,
             isGuest: !user,
             quizOptions,
-            sourceUrl: url.trim(),
+            sourceUrl: trimmedContent,
             type: "url",
           })
         );
@@ -145,6 +147,13 @@ export default function HomePage() {
         // URL 모드에서는 이미 API에서 퀴즈 생성이 완료되었으므로 바로 이동
         router.push(`/quiz/${slug}`);
         return;
+      } else {
+        // 텍스트 모드 처리
+        contentToProcess = trimmedContent;
+        titleToUse = extractTitle(trimmedContent);
+
+        // 텍스트 내용 저장
+        localStorage.setItem(`quiz-${slug}`, trimmedContent);
       }
 
       // 메타데이터 저장 (텍스트 모드)
@@ -176,8 +185,8 @@ export default function HomePage() {
                 Authorization: `Bearer ${session.access_token}`,
               },
               body: JSON.stringify({
-                content: markdown,
-                title: extractTitle(markdown),
+                content: trimmedContent,
+                title: extractTitle(trimmedContent),
                 saveToDatabase: true,
                 quizOptions,
               }),
@@ -222,6 +231,18 @@ export default function HomePage() {
       return titleLine.replace("# ", "").trim();
     }
     return content.substring(0, 50) + (content.length > 50 ? "..." : "");
+  };
+
+  // 입력된 내용이 URL인지 표시하는 헬퍼 함수
+  const getInputStatus = () => {
+    if (!content.trim()) return "내용을 입력해주세요";
+
+    const isUrl = isValidUrl(content.trim());
+    if (isUrl) {
+      return "🔗 URL이 감지되었습니다 - 웹페이지 내용을 추출하여 퀴즈를 생성합니다";
+    } else {
+      return `📄 텍스트 내용 (${content.length}자) - 입력된 텍스트로 퀴즈를 생성합니다`;
+    }
   };
 
   return (
@@ -359,117 +380,59 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* 문서 입력 섹션 */}
+        {/* 통합 입력 섹션 */}
         <div className="bg-white rounded-lg border shadow-sm p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
-          <div className="mb-4">
-            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
-              <button
-                onClick={() => setInputMode("text")}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  inputMode === "text"
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                📄 텍스트 입력
-              </button>
-              <button
-                onClick={() => setInputMode("url")}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  inputMode === "url"
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                🔗 URL 입력
-              </button>
-            </div>
-          </div>
-
-          {inputMode === "text" ? (
-            // 텍스트 입력 모드
-            <div>
-              <label
-                htmlFor="markdown-input"
-                className="block text-sm font-medium text-gray-700 mb-3 sm:mb-4"
-              >
-                📄 문서 내용 입력
-              </label>
-              <p className="text-sm text-gray-500 mb-4">
-                마크다운 문서나 블로그 포스팅 글을 복사해서 붙여넣으면, AI가
-                자동으로 요약하고 다양한 퀴즈를 생성해드립니다.
-              </p>
-              <textarea
-                id="markdown-input"
-                className="w-full h-48 sm:h-64 lg:h-72 border rounded-md p-3 sm:p-4 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
-                placeholder="여기에 학습하고 싶은 텍스트를 붙여넣어주세요...
-
-예시:
+          <div>
+            <label
+              htmlFor="content-input"
+              className="block text-sm font-medium text-gray-700 mb-3 sm:mb-4"
+            >
+              📄 문서 내용 또는 🔗 URL 입력
+            </label>
+            <textarea
+              id="content-input"
+              className="w-full h-48 sm:h-64 lg:h-72 border rounded-md p-3 sm:p-4 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
+              placeholder="
+📄 텍스트 내용:
 # 인공지능의 개념
 인공지능(AI)은 컴퓨터가 인간의 지능을 모방하여 학습하고 추론하는 기술입니다...
 
-또는 블로그 포스팅이나 기사 내용을 그대로 복사해서 붙여넣으셔도 됩니다."
-                value={markdown}
-                onChange={(e) => setMarkdown(e.target.value)}
-                disabled={isGenerating}
-                tabIndex={0}
-                aria-label="문서 내용 입력"
-              />
-            </div>
-          ) : (
-            // URL 입력 모드
-            <div>
-              <label
-                htmlFor="url-input"
-                className="block text-sm font-medium text-gray-700 mb-3 sm:mb-4"
-              >
-                🔗 웹페이지 URL 입력
-              </label>
-              <p className="text-sm text-gray-500 mb-4">
-                블로그, 뉴스 기사, 위키피디아 등의 URL을 입력하면 AI가 자동으로
-                본문을 추출하여 요약하고 퀴즈를 생성해드립니다.
-              </p>
-              <input
-                id="url-input"
-                type="url"
-                className="w-full border rounded-md p-3 sm:p-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
-                placeholder="https://example.com/article"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                disabled={isGenerating}
-                tabIndex={0}
-                aria-label="웹페이지 URL 입력"
-              />
-              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                <p className="text-sm text-yellow-800">
-                  <span className="font-medium">💡 팁:</span> 일반적인 블로그나
-                  뉴스 사이트에서 잘 동작합니다. 로그인이 필요한 페이지나 동적
-                  콘텐츠는 제대로 추출되지 않을 수 있습니다.
+🔗 웹페이지 URL:
+https://example.com/article
+https://blog.example.com/post/123
+
+블로그 포스팅이나 기사 내용을 그대로 복사해서 붙여넣어도 됩니다."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              disabled={isGenerating}
+              tabIndex={0}
+              aria-label="문서 내용 또는 URL 입력"
+            />
+
+            {/* URL 감지 시 추가 정보 표시 */}
+            {content.trim() && isValidUrl(content.trim()) && (
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-800">
+                  <span className="font-medium">🔗 URL이 감지되었습니다!</span>
+                  <br />
+                  웹페이지의 본문을 자동으로 추출하여 퀴즈를 생성합니다.
+                  로그인이 필요한 페이지나 동적 콘텐츠는 제대로 추출되지 않을 수
+                  있습니다.
                 </p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* 하단 정보 및 버튼 */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-4 sm:mt-6 space-y-4 sm:space-y-0">
             <div className="text-sm text-gray-500 order-2 sm:order-1">
-              {inputMode === "text"
-                ? markdown.length > 0
-                  ? `${markdown.length}자 입력됨`
-                  : "텍스트를 입력해주세요"
-                : url.trim()
-                ? "✅ URL이 입력되었습니다"
-                : "URL을 입력해주세요"}
+              {getInputStatus()}
             </div>
             <button
               onClick={handleGenerateQuiz}
-              disabled={
-                (inputMode === "text" ? !markdown.trim() : !url.trim()) ||
-                isGenerating
-              }
+              disabled={!content.trim() || isGenerating}
               className={`order-1 sm:order-2 w-full sm:w-auto px-6 py-3 sm:py-2 rounded-md font-medium transition-colors ${
-                (inputMode === "text" ? markdown.trim() : url.trim()) &&
-                !isGenerating
+                content.trim() && !isGenerating
                   ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
@@ -479,7 +442,7 @@ export default function HomePage() {
               {isGenerating ? (
                 <>
                   <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
-                  {inputMode === "url"
+                  {isValidUrl(content.trim())
                     ? "URL 분석 및 퀴즈 생성 중..."
                     : "퀴즈 생성 중..."}
                 </>

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { GeneratedQuiz, QuizQuestion } from "@/lib/openai";
 import { supabase } from "@/lib/supabase";
+import { getQuizRecord } from "@/lib/database";
+import { useAuth } from "@/components/AuthProvider";
 
 interface QuizAnswer {
   questionIndex: number;
@@ -14,6 +16,7 @@ interface QuizAnswer {
 export default function QuizPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const slug = params.slug as string;
 
   const [quizData, setQuizData] = useState<GeneratedQuiz | null>(null);
@@ -39,15 +42,12 @@ export default function QuizPage() {
 
   const loadQuizContent = async () => {
     try {
+      // 1. 먼저 localStorage에서 확인
       const content = localStorage.getItem(`quiz-${slug}`);
-      if (!content) {
-        setError("퀴즈를 찾을 수 없습니다.");
-        return;
-      }
 
       // 기존에 생성된 퀴즈가 있는지 확인
       const existingQuiz = localStorage.getItem(`quiz-${slug}-data`);
-      if (existingQuiz) {
+      if (existingQuiz && content) {
         try {
           const parsedQuiz = JSON.parse(existingQuiz) as GeneratedQuiz;
           setQuizData(parsedQuiz);
@@ -58,8 +58,54 @@ export default function QuizPage() {
         }
       }
 
-      // 새로운 퀴즈 생성
-      await generateNewQuiz(content);
+      // 2. localStorage에 내용이 있으면 새로운 퀴즈 생성
+      if (content) {
+        await generateNewQuiz(content);
+        return;
+      }
+
+      // 3. localStorage에 없으면 데이터베이스에서 확인 (로그인 사용자만)
+      if (user) {
+        console.log("🔍 데이터베이스에서 퀴즈 검색 중...", slug);
+        const { data: dbQuiz, error: dbError } = await getQuizRecord(
+          slug,
+          user.id
+        );
+
+        if (!dbError && dbQuiz) {
+          console.log("✅ 데이터베이스에서 퀴즈 발견:", dbQuiz.title);
+
+          // 데이터베이스에서 가져온 퀴즈를 localStorage에 임시 저장
+          localStorage.setItem(`quiz-${slug}`, dbQuiz.original_content);
+          localStorage.setItem(
+            `quiz-${slug}-data`,
+            JSON.stringify(dbQuiz.generated_quiz)
+          );
+          localStorage.setItem(
+            `quiz-${slug}-meta`,
+            JSON.stringify({
+              createdAt: dbQuiz.created_at,
+              title: dbQuiz.title,
+              userId: dbQuiz.user_id,
+              userEmail: user.email,
+              isGuest: false,
+              tag: dbQuiz.tag,
+              type: "database",
+            })
+          );
+
+          setQuizData(dbQuiz.generated_quiz);
+          setIsLoading(false);
+          return;
+        } else {
+          console.log("❌ 데이터베이스에서 퀴즈를 찾을 수 없음:", dbError);
+        }
+      }
+
+      // 4. 어디에서도 찾을 수 없으면 오류 표시
+      setError(
+        "퀴즈를 찾을 수 없습니다. 삭제되었거나 존재하지 않을 수 있습니다."
+      );
     } catch (error) {
       console.error("퀴즈 로드 오류:", error);
       setError("퀴즈를 로드하는 중 오류가 발생했습니다.");
