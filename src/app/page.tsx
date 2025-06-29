@@ -257,13 +257,13 @@ export default function HomePage() {
             ⚙️ 퀴즈 생성 옵션
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-6">
             {/* 문제 유형 선택 */}
-            <div>
+            <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 문제 유형 선택
               </label>
-              <div className="space-y-2">
+              <div className="flex flex-wrap gap-4">
                 <label className="flex items-center">
                   <input
                     type="checkbox"
@@ -319,7 +319,7 @@ export default function HomePage() {
             </div>
 
             {/* 문제 개수 설정 */}
-            <div>
+            <div className="flex-shrink-0">
               <label
                 htmlFor="question-count"
                 className="block text-sm font-medium text-gray-700 mb-3"
@@ -362,16 +362,17 @@ export default function HomePage() {
             <textarea
               id="content-input"
               className="w-full h-48 sm:h-64 lg:h-72 border rounded-md p-3 sm:p-4 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
-              placeholder="
-📄 텍스트 내용:
-# 인공지능의 개념
-인공지능(AI)은 컴퓨터가 인간의 지능을 모방하여 학습하고 추론하는 기술입니다...
-
-🔗 웹페이지 URL:
-https://example.com/article
-https://blog.example.com/post/123
-
-블로그 포스팅이나 기사 내용을 그대로 복사해서 붙여넣어도 됩니다."
+              placeholder={`🔗 웹페이지 URL:
+                https://example.com/article
+                https://blog.example.com/post/123
+                
+                또는
+                
+                📄 텍스트 내용:
+                # 인공지능의 개념
+                인공지능(AI)은 컴퓨터가 인간의 지능을 모방하여 학습하고 추론하는 기술입니다...
+                
+                블로그 포스팅이나 기사 내용을 그대로 복사해서 붙여넣어도 됩니다.`}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               disabled={isGenerating}
