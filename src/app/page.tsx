@@ -111,38 +111,41 @@ export default function HomePage() {
           result.sourceInfo.originalTitle ||
           "URL 퀴즈";
 
-        // URL 분석 결과 저장
-        localStorage.setItem(
-          `quiz-${slug}`,
-          JSON.stringify({
-            type: "url",
-            url: trimmedContent,
-            content: contentToProcess,
-            sourceInfo: result.sourceInfo,
-          })
-        );
-
-        // 이미 퀴즈가 생성되었으므로 저장하고 바로 이동
-        if (result.data) {
+        // 게스트 사용자만 localStorage에 저장
+        if (!user) {
+          // URL 분석 결과 저장
           localStorage.setItem(
-            `quiz-${slug}-data`,
-            JSON.stringify(result.data)
+            `quiz-${slug}`,
+            JSON.stringify({
+              type: "url",
+              url: trimmedContent,
+              content: contentToProcess,
+              sourceInfo: result.sourceInfo,
+            })
+          );
+
+          // 이미 퀴즈가 생성되었으므로 저장하고 바로 이동
+          if (result.data) {
+            localStorage.setItem(
+              `quiz-${slug}-data`,
+              JSON.stringify(result.data)
+            );
+          }
+
+          localStorage.setItem(
+            `quiz-${slug}-meta`,
+            JSON.stringify({
+              createdAt,
+              title: titleToUse,
+              userId: "guest",
+              userEmail: null,
+              isGuest: true,
+              quizOptions,
+              sourceUrl: trimmedContent,
+              type: "url",
+            })
           );
         }
-
-        localStorage.setItem(
-          `quiz-${slug}-meta`,
-          JSON.stringify({
-            createdAt,
-            title: titleToUse,
-            userId: user?.id || "guest",
-            userEmail: user?.email || null,
-            isGuest: !user,
-            quizOptions,
-            sourceUrl: trimmedContent,
-            type: "url",
-          })
-        );
 
         // URL 모드에서는 이미 API에서 퀴즈 생성이 완료되었으므로 바로 이동
         router.push(`/quiz/${slug}`);
@@ -152,23 +155,25 @@ export default function HomePage() {
         contentToProcess = trimmedContent;
         titleToUse = extractTitle(trimmedContent);
 
-        // 텍스트 내용 저장
-        localStorage.setItem(`quiz-${slug}`, trimmedContent);
-      }
+        // 게스트 사용자만 localStorage에 저장
+        if (!user) {
+          localStorage.setItem(`quiz-${slug}`, trimmedContent);
 
-      // 메타데이터 저장 (텍스트 모드)
-      localStorage.setItem(
-        `quiz-${slug}-meta`,
-        JSON.stringify({
-          createdAt,
-          title: titleToUse,
-          userId: user?.id || "guest",
-          userEmail: user?.email || null,
-          isGuest: !user,
-          quizOptions,
-          type: "text",
-        })
-      );
+          // 메타데이터 저장 (텍스트 모드)
+          localStorage.setItem(
+            `quiz-${slug}-meta`,
+            JSON.stringify({
+              createdAt,
+              title: titleToUse,
+              userId: "guest",
+              userEmail: null,
+              isGuest: true,
+              quizOptions,
+              type: "text",
+            })
+          );
+        }
+      }
 
       // 로그인한 사용자인 경우 즉시 퀴즈 생성하고 DB에 저장
       if (user) {
@@ -185,8 +190,8 @@ export default function HomePage() {
                 Authorization: `Bearer ${session.access_token}`,
               },
               body: JSON.stringify({
-                content: trimmedContent,
-                title: extractTitle(trimmedContent),
+                content: isUrl ? contentToProcess : trimmedContent,
+                title: titleToUse,
                 saveToDatabase: true,
                 quizOptions,
               }),
@@ -195,12 +200,7 @@ export default function HomePage() {
             const result = await response.json();
 
             if (result.success && result.data) {
-              // 생성된 퀴즈를 localStorage에 저장
-              localStorage.setItem(
-                `quiz-${slug}-data`,
-                JSON.stringify(result.data)
-              );
-
+              // 로그인한 사용자는 localStorage에 저장하지 않음
               if (result.savedRecord) {
                 console.log(
                   "✅ 퀴즈가 데이터베이스에 성공적으로 저장되었습니다:",

@@ -42,30 +42,8 @@ export default function QuizPage() {
 
   const loadQuizContent = async () => {
     try {
-      // 1. 먼저 localStorage에서 확인
-      const content = localStorage.getItem(`quiz-${slug}`);
-
-      // 기존에 생성된 퀴즈가 있는지 확인
-      const existingQuiz = localStorage.getItem(`quiz-${slug}-data`);
-      if (existingQuiz && content) {
-        try {
-          const parsedQuiz = JSON.parse(existingQuiz) as GeneratedQuiz;
-          setQuizData(parsedQuiz);
-          setIsLoading(false);
-          return;
-        } catch (error) {
-          console.error("기존 퀴즈 데이터 파싱 오류:", error);
-        }
-      }
-
-      // 2. localStorage에 내용이 있으면 새로운 퀴즈 생성
-      if (content) {
-        await generateNewQuiz(content);
-        return;
-      }
-
-      // 3. localStorage에 없으면 데이터베이스에서 확인 (로그인 사용자만)
       if (user) {
+        // 로그인한 사용자: 데이터베이스에서만 퀴즈 로드 (localStorage 사용 안함)
         console.log("🔍 데이터베이스에서 퀴즈 검색 중...", slug);
         const { data: dbQuiz, error: dbError } = await getQuizRecord(
           slug,
@@ -74,38 +52,44 @@ export default function QuizPage() {
 
         if (!dbError && dbQuiz) {
           console.log("✅ 데이터베이스에서 퀴즈 발견:", dbQuiz.title);
-
-          // 데이터베이스에서 가져온 퀴즈를 localStorage에 임시 저장
-          localStorage.setItem(`quiz-${slug}`, dbQuiz.original_content);
-          localStorage.setItem(
-            `quiz-${slug}-data`,
-            JSON.stringify(dbQuiz.generated_quiz)
-          );
-          localStorage.setItem(
-            `quiz-${slug}-meta`,
-            JSON.stringify({
-              createdAt: dbQuiz.created_at,
-              title: dbQuiz.title,
-              userId: dbQuiz.user_id,
-              userEmail: user.email,
-              isGuest: false,
-              tag: dbQuiz.tag,
-              type: "database",
-            })
-          );
-
           setQuizData(dbQuiz.generated_quiz);
           setIsLoading(false);
           return;
         } else {
           console.log("❌ 데이터베이스에서 퀴즈를 찾을 수 없음:", dbError);
+          setError(
+            "퀴즈를 찾을 수 없습니다. 삭제되었거나 존재하지 않을 수 있습니다."
+          );
         }
-      }
+      } else {
+        // 게스트 사용자: localStorage에서만 퀴즈 로드
+        console.log("🔍 게스트 모드: localStorage에서 퀴즈 검색 중...", slug);
 
-      // 4. 어디에서도 찾을 수 없으면 오류 표시
-      setError(
-        "퀴즈를 찾을 수 없습니다. 삭제되었거나 존재하지 않을 수 있습니다."
-      );
+        // 1. 기존에 생성된 퀴즈가 있는지 확인
+        const existingQuiz = localStorage.getItem(`quiz-${slug}-data`);
+        if (existingQuiz) {
+          try {
+            const parsedQuiz = JSON.parse(existingQuiz) as GeneratedQuiz;
+            setQuizData(parsedQuiz);
+            setIsLoading(false);
+            return;
+          } catch (error) {
+            console.error("기존 퀴즈 데이터 파싱 오류:", error);
+          }
+        }
+
+        // 2. localStorage에서 원본 내용 확인하여 새로운 퀴즈 생성
+        const content = localStorage.getItem(`quiz-${slug}`);
+        if (content) {
+          await generateNewQuiz(content);
+          return;
+        }
+
+        // 3. 어디에서도 찾을 수 없으면 오류 표시
+        setError(
+          "퀴즈를 찾을 수 없습니다. 삭제되었거나 존재하지 않을 수 있습니다."
+        );
+      }
     } catch (error) {
       console.error("퀴즈 로드 오류:", error);
       setError("퀴즈를 로드하는 중 오류가 발생했습니다.");

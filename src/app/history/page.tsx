@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import {
@@ -23,18 +23,136 @@ export default function HistoryPage() {
   const router = useRouter();
   const { user } = useAuth();
 
-  useEffect(() => {
-    loadQuizHistory();
-  }, [user]);
+  // user가 처음 확정될 때만 실행 (undefined → null 또는 User 객체)
+  const prevUserRef = useRef<typeof user | undefined>(undefined);
 
-  const loadQuizHistory = async () => {
+  useEffect(() => {
+    if (prevUserRef.current === undefined && user !== undefined) {
+      const loadQuizHistory = async () => {
+        try {
+          setIsLoading(true);
+          let history: QuizItem[] = [];
+
+          if (user) {
+            // 로그인한 사용자: 데이터베이스에서 퀴즈 로드
+            console.log("🔄 데이터베이스에서 퀴즈 히스토리 로드 중...");
+            const { data: dbRecords, error } = await getUserQuizRecords(
+              user.id,
+              50
+            );
+
+            if (!error && dbRecords) {
+              history = dbRecords.map((record: QuizRecord) => ({
+                id: record.id,
+                title: record.title,
+                tag: record.tag,
+                content: record.original_content,
+                createdAt: record.created_at,
+              }));
+              console.log(
+                `✅ 데이터베이스에서 ${history.length}개 퀴즈 로드됨`
+              );
+            } else {
+              console.error("❌ 데이터베이스 로드 실패:", error);
+              // 로그인한 사용자는 localStorage 폴백 사용하지 않음
+              history = [];
+            }
+          } else {
+            // 게스트 사용자: localStorage에서만 로드 (인라인 처리)
+            console.log(
+              "🔄 게스트 모드: 로컬스토리지에서 퀴즈 히스토리 로드 중..."
+            );
+
+            // localStorage 퀴즈 로드 로직 (인라인)
+            const localQuizzes: QuizItem[] = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (
+                key?.startsWith("quiz-") &&
+                !key.includes("-meta") &&
+                !key.includes("-data")
+              ) {
+                const content = localStorage.getItem(key);
+                if (content) {
+                  const id = key.replace("quiz-", "");
+                  const metaData = localStorage.getItem(`${key}-meta`);
+                  let parsedMeta;
+                  try {
+                    parsedMeta = metaData ? JSON.parse(metaData) : null;
+                  } catch {
+                    parsedMeta = null;
+                  }
+
+                  // 제목 추출
+                  let title = parsedMeta?.title;
+                  if (!title) {
+                    try {
+                      const parsedContent = JSON.parse(content);
+                      if (parsedContent.type === "url") {
+                        title =
+                          parsedContent.sourceInfo?.originalTitle ||
+                          parsedContent.url ||
+                          "URL 퀴즈";
+                      } else {
+                        throw new Error("Not URL content");
+                      }
+                    } catch {
+                      const lines = content.split("\n");
+                      const titleLine = lines.find((line) =>
+                        line.startsWith("# ")
+                      );
+                      title = titleLine
+                        ? titleLine.replace("# ", "").trim()
+                        : content.substring(0, 50) +
+                          (content.length > 50 ? "..." : "");
+                    }
+                  }
+
+                  const createdAt =
+                    parsedMeta?.createdAt || new Date().toISOString();
+                  const tag = parsedMeta?.tag;
+
+                  localQuizzes.push({
+                    id,
+                    content,
+                    createdAt,
+                    title,
+                    tag,
+                  });
+                }
+              }
+            }
+            history = localQuizzes;
+            console.log(`✅ 로컬스토리지에서 ${history.length}개 퀴즈 로드됨`);
+          }
+
+          // 생성일 기준 최신순 정렬
+          history.sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+          setQuizHistory(history);
+        } catch (error) {
+          console.error("히스토리 로드 중 오류:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      loadQuizHistory();
+      prevUserRef.current = user;
+    }
+  }, [user]); // user가 처음 로드될 때만 실행
+
+  // 히스토리 새로고침 함수 (수동으로 호출할 수 있도록)
+  const refreshHistory = useCallback(async () => {
     try {
       setIsLoading(true);
       let history: QuizItem[] = [];
 
-      // 로그인한 사용자는 데이터베이스에서 로드
       if (user) {
-        console.log("🔄 데이터베이스에서 퀴즈 히스토리 로드 중...");
+        // 로그인한 사용자: 데이터베이스에서 퀴즈 로드
+        console.log("🔄 데이터베이스에서 퀴즈 히스토리 새로고침 중...");
         const { data: dbRecords, error } = await getUserQuizRecords(
           user.id,
           50
@@ -48,15 +166,18 @@ export default function HistoryPage() {
             content: record.original_content,
             createdAt: record.created_at,
           }));
-          console.log(`✅ 데이터베이스에서 ${history.length}개 퀴즈 로드됨`);
+          console.log(
+            `✅ 데이터베이스에서 ${history.length}개 퀴즈 새로고침됨`
+          );
         } else {
-          console.error("❌ 데이터베이스 로드 실패:", error);
+          console.error("❌ 데이터베이스 새로고침 실패:", error);
+          history = [];
         }
-      }
+      } else {
+        // 게스트 사용자: localStorage에서만 로드
+        console.log("🔄 게스트 모드: 로컬스토리지 새로고침 중...");
 
-      // 게스트 사용자나 데이터베이스 로드 실패시 localStorage에서 로드
-      if (!user || history.length === 0) {
-        console.log("🔄 로컬스토리지에서 퀴즈 히스토리 로드 중...");
+        const localQuizzes: QuizItem[] = [];
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
           if (
@@ -67,20 +188,41 @@ export default function HistoryPage() {
             const content = localStorage.getItem(key);
             if (content) {
               const id = key.replace("quiz-", "");
-
-              // 메타데이터에서 제목 우선 추출
-              const metaData = getMetaFromLocalStorage(key);
-              let title = metaData?.title;
-
-              // 메타데이터에 제목이 없으면 content에서 추출
-              if (!title) {
-                title = extractTitleFromContent(content);
+              const metaData = localStorage.getItem(`${key}-meta`);
+              let parsedMeta;
+              try {
+                parsedMeta = metaData ? JSON.parse(metaData) : null;
+              } catch {
+                parsedMeta = null;
               }
 
-              const createdAt = metaData?.createdAt || getCreatedDate(key);
-              const tag = metaData?.tag;
+              let title = parsedMeta?.title;
+              if (!title) {
+                try {
+                  const parsedContent = JSON.parse(content);
+                  if (parsedContent.type === "url") {
+                    title =
+                      parsedContent.sourceInfo?.originalTitle ||
+                      parsedContent.url ||
+                      "URL 퀴즈";
+                  } else {
+                    throw new Error("Not URL content");
+                  }
+                } catch {
+                  const lines = content.split("\n");
+                  const titleLine = lines.find((line) => line.startsWith("# "));
+                  title = titleLine
+                    ? titleLine.replace("# ", "").trim()
+                    : content.substring(0, 50) +
+                      (content.length > 50 ? "..." : "");
+                }
+              }
 
-              history.push({
+              const createdAt =
+                parsedMeta?.createdAt || new Date().toISOString();
+              const tag = parsedMeta?.tag;
+
+              localQuizzes.push({
                 id,
                 content,
                 createdAt,
@@ -90,7 +232,8 @@ export default function HistoryPage() {
             }
           }
         }
-        console.log(`✅ 로컬스토리지에서 ${history.length}개 퀴즈 로드됨`);
+        history = localQuizzes;
+        console.log(`✅ 로컬스토리지에서 ${history.length}개 퀴즈 새로고침됨`);
       }
 
       // 생성일 기준 최신순 정렬
@@ -100,67 +243,11 @@ export default function HistoryPage() {
       );
       setQuizHistory(history);
     } catch (error) {
-      console.error("히스토리 로드 중 오류:", error);
+      console.error("히스토리 새로고침 중 오류:", error);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const extractTitleFromContent = (content: string): string => {
-    try {
-      // URL 타입인지 확인 (JSON 형태로 저장된 경우)
-      const parsedContent = JSON.parse(content);
-      if (parsedContent.type === "url") {
-        // sourceInfo에서 제목 추출 시도
-        return (
-          parsedContent.sourceInfo?.originalTitle ||
-          parsedContent.url ||
-          "URL 퀴즈"
-        );
-      }
-    } catch {
-      // JSON 파싱 실패시 일반 텍스트로 처리
-    }
-
-    // 일반 마크다운 텍스트에서 제목 추출
-    const lines = content.split("\n");
-    const titleLine = lines.find((line) => line.startsWith("# "));
-    if (titleLine) {
-      return titleLine.replace("# ", "").trim();
-    }
-    return content.substring(0, 50) + (content.length > 50 ? "..." : "");
-  };
-
-  const getMetaFromLocalStorage = (key: string) => {
-    const saved = localStorage.getItem(`${key}-meta`);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  };
-
-  const getCreatedDate = (key: string): string => {
-    // localStorage에는 생성일이 없으므로 현재 시간을 사용
-    // 실제 프로젝트에서는 별도의 메타데이터 저장이 필요
-    const saved = localStorage.getItem(`${key}-meta`);
-    if (saved) {
-      try {
-        const meta = JSON.parse(saved);
-        return meta.createdAt;
-      } catch {
-        // 메타데이터가 없거나 파싱 실패시 현재 시간 사용
-      }
-    }
-
-    // 기본값으로 현재 시간 저장
-    const now = new Date().toISOString();
-    localStorage.setItem(`${key}-meta`, JSON.stringify({ createdAt: now }));
-    return now;
-  };
+  }, [user]);
 
   const handleViewQuiz = (id: string) => {
     router.push(`/quiz/${id}`);
@@ -169,26 +256,26 @@ export default function HistoryPage() {
   const handleDeleteQuiz = async (id: string) => {
     if (confirm("이 퀴즈를 삭제하시겠습니까?")) {
       try {
-        // 로그인 사용자인 경우 데이터베이스에서도 삭제 시도
         if (user) {
-          console.log("🗑️ 데이터베이스에서 퀴즈 삭제 시도 중...", id);
+          // 로그인 사용자: 데이터베이스에서만 삭제 (localStorage 사용 안함)
+          console.log("🗑️ 데이터베이스에서 퀴즈 삭제 중...", id);
           const { error } = await deleteQuizRecord(id, user.id);
           if (!error) {
             console.log("✅ 데이터베이스에서 퀴즈 삭제 완료");
           } else {
-            console.log(
-              "ℹ️ 데이터베이스에서 퀴즈를 찾을 수 없음 (로컬 퀴즈일 가능성)"
-            );
+            console.log("❌ 데이터베이스 삭제 실패:", error);
+            throw new Error("퀴즈 삭제에 실패했습니다.");
           }
+        } else {
+          // 게스트 사용자: localStorage에서만 삭제
+          console.log("🗑️ 로컬스토리지에서 퀴즈 삭제 중...", id);
+          localStorage.removeItem(`quiz-${id}`);
+          localStorage.removeItem(`quiz-${id}-meta`);
+          localStorage.removeItem(`quiz-${id}-data`);
         }
 
-        // localStorage에서도 삭제 (데이터베이스에서 가져온 퀴즈도 임시로 저장되므로)
-        localStorage.removeItem(`quiz-${id}`);
-        localStorage.removeItem(`quiz-${id}-meta`);
-        localStorage.removeItem(`quiz-${id}-data`);
-
         // 히스토리 다시 로드
-        loadQuizHistory();
+        refreshHistory();
       } catch (error) {
         console.error("퀴즈 삭제 중 오류:", error);
         alert("퀴즈 삭제 중 오류가 발생했습니다.");
@@ -196,13 +283,35 @@ export default function HistoryPage() {
     }
   };
 
-  const handleDeleteAll = () => {
+  const handleDeleteAll = async () => {
     if (confirm("모든 퀴즈 히스토리를 삭제하시겠습니까?")) {
-      quizHistory.forEach((item) => {
-        localStorage.removeItem(`quiz-${item.id}`);
-        localStorage.removeItem(`quiz-${item.id}-meta`);
-      });
-      setQuizHistory([]);
+      try {
+        if (user) {
+          // 로그인 사용자: 데이터베이스 퀴즈들을 개별 삭제
+          console.log("🗑️ 데이터베이스에서 모든 퀴즈 삭제 중...");
+          const deletePromises = quizHistory.map(async (item) => {
+            const { error } = await deleteQuizRecord(item.id, user.id);
+            if (error) {
+              console.log(`❌ 퀴즈 ${item.id} 삭제 실패:`, error);
+            }
+          });
+          await Promise.all(deletePromises);
+          console.log("✅ 데이터베이스 퀴즈 삭제 완료");
+        } else {
+          // 게스트 사용자: localStorage만 정리
+          console.log("🗑️ 로컬스토리지에서 모든 퀴즈 삭제 중...");
+          quizHistory.forEach((item) => {
+            localStorage.removeItem(`quiz-${item.id}`);
+            localStorage.removeItem(`quiz-${item.id}-meta`);
+            localStorage.removeItem(`quiz-${item.id}-data`);
+          });
+        }
+
+        setQuizHistory([]);
+      } catch (error) {
+        console.error("전체 삭제 중 오류:", error);
+        alert("퀴즈 삭제 중 오류가 발생했습니다.");
+      }
     }
   };
 
@@ -273,7 +382,7 @@ export default function HistoryPage() {
           <p>
             {user ? (
               <>
-                <span className="font-medium">클라우드 + 로컬</span> 퀴즈
+                <span className="font-medium">클라우드</span> 퀴즈
               </>
             ) : (
               <>
