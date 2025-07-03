@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
 import { useAuth } from "@/components/AuthProvider";
@@ -28,6 +28,7 @@ export default function HomePage() {
   });
   const router = useRouter();
   const { user } = useAuth();
+  const [quizCount, setQuizCount] = useState<number | null>(null);
 
   // URL 여부를 판단하는 헬퍼 함수
   const isValidUrl = (text: string): boolean => {
@@ -245,6 +246,36 @@ export default function HomePage() {
     }
   };
 
+  useEffect(() => {
+    const fetchQuizCount = async () => {
+      if (user) {
+        // 로그인: DB에서 개수 fetch
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          const response = await fetch("/api/quiz-history", {
+            headers: session?.access_token
+              ? { Authorization: `Bearer ${session.access_token}` }
+              : {},
+          });
+          const result = await response.json();
+          setQuizCount(Array.isArray(result.data) ? result.data.length : 0);
+        } catch {
+          setQuizCount(0);
+        }
+      } else {
+        // 게스트: localStorage에서 개수 카운트
+        const keys = Object.keys(localStorage);
+        const quizMetaKeys = keys.filter(
+          (key) => key.startsWith("quiz-") && key.endsWith("-meta")
+        );
+        setQuizCount(quizMetaKeys.length);
+      }
+    };
+    fetchQuizCount();
+  }, [user]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto ">
@@ -431,7 +462,15 @@ export default function HomePage() {
               📚 퀴즈 히스토리
             </h3>
             <p className="text-gray-600 text-sm mb-3">
-              생성한 퀴즈들을 확인하고 관리하세요
+              {user
+                ? "내가 생성한 퀴즈 개수입니다."
+                : "이 브라우저에서 생성한 퀴즈 개수입니다."}
+              <br />
+              <span className="font-semibold text-blue-600">
+                {quizCount === null
+                  ? "로딩 중..."
+                  : `현재 생성된 퀴즈: ${quizCount}개`}
+              </span>
             </p>
             <button
               onClick={() => router.push("/history")}
