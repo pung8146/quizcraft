@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import type { User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import type { User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 
 export default function MyPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -12,7 +12,6 @@ export default function MyPage() {
 
   useEffect(() => {
     loadUserData();
-    getQuizCount();
   }, []);
 
   const loadUserData = async () => {
@@ -21,30 +20,54 @@ export default function MyPage() {
         data: { user },
       } = await supabase.auth.getUser();
       setUser(user);
+
+      // 사용자가 로그인한 경우에만 퀴즈 개수 가져오기
+      if (user) {
+        await getQuizCount();
+      }
     } catch (error) {
-      console.error('사용자 정보 로드 오류:', error);
+      console.error("사용자 정보 로드 오류:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getQuizCount = () => {
-    let count = 0;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith('quiz-')) {
-        count++;
+  const getQuizCount = async () => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        console.error("인증 토큰이 없습니다.");
+        return;
       }
+
+      const response = await fetch("/api/quiz-history?page=1&limit=1", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data?.pagination) {
+          setQuizCount(result.data.pagination.totalRecords);
+        }
+      } else {
+        console.error("퀴즈 개수 조회 실패:", response.statusText);
+      }
+    } catch (error) {
+      console.error("퀴즈 개수 조회 오류:", error);
     }
-    setQuizCount(count);
   };
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    return date.toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
