@@ -27,6 +27,8 @@ export default function QuizPage() {
   const [showResults, setShowResults] = useState(false);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [hasSavedWrongAnswers, setHasSavedWrongAnswers] = useState(false);
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+  const [isKeyPointsOpen, setIsKeyPointsOpen] = useState(false);
 
   useEffect(() => {
     loadQuizContent();
@@ -551,17 +553,45 @@ export default function QuizPage() {
       <div className="max-w-4xl mx-auto px-4">
         {/* 요약 섹션 */}
         <div className="bg-white rounded-lg shadow-sm p-6 sm:p-8 mb-6">
-          <h2 className="text-2xl font-bold mb-4">📝 내용 요약</h2>
-          <p className="text-gray-700 mb-4">{quizData.summary}</p>
+          {/* 내용 요약 토글 */}
+          <button
+            onClick={() => setIsSummaryOpen(!isSummaryOpen)}
+            className="w-full flex items-center justify-between text-left mb-4"
+          >
+            <h2 className="text-2xl font-bold">📝 내용 요약</h2>
+            <span className="text-gray-500 transition-transform duration-200">
+              {isSummaryOpen ? "↑" : "↓"}
+            </span>
+          </button>
 
-          <h3 className="text-lg font-semibold mb-3">🔑 핵심 포인트</h3>
-          <ul className="list-disc list-inside space-y-2">
-            {quizData.keyPoints.map((point, index) => (
-              <li key={index} className="text-gray-700">
-                {point}
-              </li>
-            ))}
-          </ul>
+          {isSummaryOpen && (
+            <div className="mb-6">
+              <p className="text-gray-700">{quizData.summary}</p>
+            </div>
+          )}
+
+          {/* 핵심 포인트 토글 */}
+          <button
+            onClick={() => setIsKeyPointsOpen(!isKeyPointsOpen)}
+            className="w-full flex items-center justify-between text-left"
+          >
+            <h3 className="text-lg font-semibold">🔑 핵심 포인트</h3>
+            <span className="text-gray-500 transition-transform duration-200">
+              {isKeyPointsOpen ? "↑" : "↓"}
+            </span>
+          </button>
+
+          {isKeyPointsOpen && (
+            <div className="mt-3">
+              <ul className="list-disc list-inside space-y-2">
+                {quizData.keyPoints.map((point, index) => (
+                  <li key={index} className="text-gray-700">
+                    {point}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* 퀴즈 섹션 */}
