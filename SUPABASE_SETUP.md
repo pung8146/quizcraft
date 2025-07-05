@@ -64,7 +64,48 @@ CREATE TRIGGER update_quiz_records_updated_at
   EXECUTE FUNCTION update_updated_at_column();
 ```
 
-### 1-2. 문의게시판 테이블
+### 1-2. 틀린 문제 저장 테이블
+
+```sql
+-- 틀린 문제를 저장할 테이블 생성
+CREATE TABLE wrong_answers (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  quiz_id VARCHAR(255) NOT NULL, -- 퀴즈 ID (UUID 또는 문자열)
+  quiz_title VARCHAR(255) NOT NULL, -- 퀴즈 제목
+  question_index INTEGER NOT NULL, -- 문제 번호 (0부터 시작)
+  question_text TEXT NOT NULL, -- 문제 내용
+  user_answer TEXT NOT NULL, -- 사용자 답안
+  correct_answer TEXT NOT NULL, -- 정답
+  explanation TEXT, -- 설명 (선택사항)
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 인덱스 생성 (성능 최적화)
+CREATE INDEX idx_wrong_answers_user_id ON wrong_answers(user_id);
+CREATE INDEX idx_wrong_answers_created_at ON wrong_answers(created_at);
+CREATE INDEX idx_wrong_answers_quiz_id ON wrong_answers(quiz_id);
+
+-- Row Level Security (RLS) 활성화
+ALTER TABLE wrong_answers ENABLE ROW LEVEL SECURITY;
+
+-- 정책 생성: 사용자는 자신의 틀린 문제만 조회할 수 있음
+CREATE POLICY "Users can view their own wrong answers"
+  ON wrong_answers FOR SELECT
+  USING (auth.uid() = user_id);
+
+-- 정책 생성: 사용자는 자신의 틀린 문제만 삽입할 수 있음
+CREATE POLICY "Users can insert their own wrong answers"
+  ON wrong_answers FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- 정책 생성: 사용자는 자신의 틀린 문제만 삭제할 수 있음
+CREATE POLICY "Users can delete their own wrong answers"
+  ON wrong_answers FOR DELETE
+  USING (auth.uid() = user_id);
+```
+
+### 1-3. 문의게시판 테이블
 
 ```sql
 -- 문의게시판 테이블 생성
@@ -140,15 +181,15 @@ OPENAI_API_KEY=your_openai_api_key
 
 ```javascript
 // 프론트엔드에서 퀴즈 생성 요청
-const response = await fetch('/api/generate-quiz', {
-  method: 'POST',
+const response = await fetch("/api/generate-quiz", {
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     Authorization: `Bearer ${userToken}`, // 로그인한 사용자의 토큰
   },
   body: JSON.stringify({
-    content: '학습할 텍스트 내용',
-    title: '퀴즈 제목 (선택사항)',
+    content: "학습할 텍스트 내용",
+    title: "퀴즈 제목 (선택사항)",
     saveToDatabase: true, // 데이터베이스에 저장하려면 true
   }),
 });
@@ -162,7 +203,7 @@ console.log(result.savedRecord); // 저장된 기록 (저장된 경우)
 
 ```javascript
 // 사용자의 퀴즈 히스토리 조회
-const response = await fetch('/api/quiz-history?page=1&limit=10', {
+const response = await fetch("/api/quiz-history?page=1&limit=10", {
   headers: {
     Authorization: `Bearer ${userToken}`,
   },
@@ -200,7 +241,7 @@ interface GeneratedQuiz {
 }
 
 interface QuizQuestion {
-  type: 'multiple-choice' | 'true-false' | 'fill-in-the-blank';
+  type: "multiple-choice" | "true-false" | "fill-in-the-blank";
   question: string;
   options?: string[];
   correctAnswer: string | number;
@@ -239,13 +280,13 @@ const {
   data: { session },
 } = await supabase.auth.getSession();
 if (session) {
-  const response = await fetch('/api/test-db', {
+  const response = await fetch("/api/test-db", {
     headers: {
       Authorization: `Bearer ${session.access_token}`,
     },
   });
   const result = await response.json();
-  console.log('데이터베이스 테스트 결과:', result);
+  console.log("데이터베이스 테스트 결과:", result);
 }
 ```
 
