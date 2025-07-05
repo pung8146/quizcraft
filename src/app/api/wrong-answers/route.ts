@@ -25,9 +25,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { quizId, quizTitle, wrongAnswers } = body;
+    const { quizRecordId, quizTitle, wrongAnswers } = body;
 
-    if (!quizId || !wrongAnswers || !Array.isArray(wrongAnswers)) {
+    if (!quizRecordId || !wrongAnswers || !Array.isArray(wrongAnswers)) {
       return NextResponse.json(
         { error: "필수 데이터가 누락되었습니다." },
         { status: 400 }
@@ -41,15 +41,17 @@ export async function POST(request: NextRequest) {
         wrongAnswers.map(
           (answer: {
             questionIndex: number;
+            questionType: string;
             questionText: string;
             userAnswer: string | number | boolean;
             correctAnswer: string | number | boolean;
             explanation?: string;
           }) => ({
             user_id: user.id,
-            quiz_id: quizId,
+            quiz_record_id: quizRecordId,
             quiz_title: quizTitle,
             question_index: answer.questionIndex,
+            question_type: answer.questionType,
             question_text: answer.questionText,
             user_answer: answer.userAnswer,
             correct_answer: answer.correctAnswer,

@@ -311,7 +311,7 @@ export default function QuizPage() {
   };
 
   const saveWrongAnswers = async () => {
-    if (!user || !quizData) return;
+    if (!quizData) return;
 
     try {
       // 틀린 문제들만 필터링
@@ -321,6 +321,7 @@ export default function QuizPage() {
           const question = quizData.questions[answer.questionIndex];
           return {
             questionIndex: answer.questionIndex,
+            questionType: question.type,
             questionText: question.question,
             userAnswer: answer.answer,
             correctAnswer: question.correctAnswer,
@@ -330,30 +331,67 @@ export default function QuizPage() {
 
       if (wrongAnswers.length === 0) return;
 
-      // 현재 사용자 세션 확인
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      if (user) {
+        // 로그인한 사용자: 데이터베이스에 저장
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      if (!session?.access_token) return;
+        if (!session?.access_token) return;
 
-      const response = await fetch("/api/wrong-answers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          quizId: slug,
-          quizTitle: "퀴즈",
-          wrongAnswers,
-        }),
-      });
+        // 퀴즈 기록 ID를 가져오기 위해 데이터베이스에서 조회
+        const { data: quizRecord } = await getQuizRecord(slug, user.id);
+        const quizRecordId = quizRecord?.id;
 
-      if (response.ok) {
-        console.log("✅ 틀린 문제가 오답 노트에 저장되었습니다.");
+        if (!quizRecordId) {
+          console.log(
+            "❌ 퀴즈 기록을 찾을 수 없어 틀린 문제를 저장할 수 없습니다."
+          );
+          return;
+        }
+
+        const response = await fetch("/api/wrong-answers", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            quizRecordId: quizRecordId,
+            quizTitle: quizRecord?.title || "퀴즈",
+            wrongAnswers,
+          }),
+        });
+
+        if (response.ok) {
+          console.log("✅ 틀린 문제가 오답 노트에 저장되었습니다.");
+        } else {
+          console.error("❌ 틀린 문제 저장 실패");
+        }
       } else {
-        console.error("❌ 틀린 문제 저장 실패");
+        // 게스트 사용자: localStorage에 저장
+        const existingWrongAnswers = JSON.parse(
+          localStorage.getItem("wrong-answers") || "[]"
+        );
+
+        const newWrongAnswers = wrongAnswers.map((wrongAnswer) => ({
+          ...wrongAnswer,
+          id: crypto.randomUUID(),
+          quiz_id: slug,
+          quiz_title: "퀴즈",
+          created_at: new Date().toISOString(),
+        }));
+
+        const updatedWrongAnswers = [
+          ...existingWrongAnswers,
+          ...newWrongAnswers,
+        ];
+        localStorage.setItem(
+          "wrong-answers",
+          JSON.stringify(updatedWrongAnswers)
+        );
+
+        console.log("✅ 틀린 문제가 로컬 오답 노트에 저장되었습니다.");
       }
     } catch (error) {
       console.error("틀린 문제 저장 중 오류:", error);
@@ -471,14 +509,12 @@ export default function QuizPage() {
               >
                 다시 풀기
               </button>
-              {user && (
-                <button
-                  onClick={() => router.push("/wrong-answers")}
-                  className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  📝 오답 노트 보기
-                </button>
-              )}
+              <button
+                onClick={() => router.push("/wrong-answers")}
+                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                📝 오답 노트 보기
+              </button>
               <button
                 onClick={() => router.push("/")}
                 className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"

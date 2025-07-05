@@ -7,9 +7,10 @@ import { useRouter } from "next/navigation";
 
 interface WrongAnswer {
   id: string;
-  quiz_id: string;
+  quiz_record_id: string;
   quiz_title: string;
   question_index: number;
+  question_type: string;
   question_text: string;
   user_answer: string | number | boolean;
   correct_answer: string | number | boolean;
@@ -33,38 +34,64 @@ export default function WrongAnswersPage() {
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    if (!user) {
-      router.push("/login");
-      return;
-    }
     loadWrongAnswers();
   }, [user]);
 
   const loadWrongAnswers = async (page: number = 1) => {
     try {
       setIsLoading(true);
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
 
-      if (!session?.access_token) {
-        setError("인증이 필요합니다.");
-        return;
-      }
+      if (user) {
+        // 로그인한 사용자: 데이터베이스에서 로드
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      const response = await fetch(`/api/wrong-answers?page=${page}&limit=20`, {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+        if (!session?.access_token) {
+          setError("인증이 필요합니다.");
+          return;
+        }
 
-      const result = await response.json();
+        const response = await fetch(
+          `/api/wrong-answers?page=${page}&limit=20`,
+          {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          }
+        );
 
-      if (response.ok && result.success) {
-        setWrongAnswers(result.data.wrongAnswers);
-        setPagination(result.data.pagination);
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          setWrongAnswers(result.data.wrongAnswers);
+          setPagination(result.data.pagination);
+        } else {
+          setError(result.error || "틀린 문제를 불러오는데 실패했습니다.");
+        }
       } else {
-        setError(result.error || "틀린 문제를 불러오는데 실패했습니다.");
+        // 게스트 사용자: localStorage에서 로드
+        const storedWrongAnswers = JSON.parse(
+          localStorage.getItem("wrong-answers") || "[]"
+        );
+
+        // 페이지네이션 처리
+        const limit = 20;
+        const offset = (page - 1) * limit;
+        const paginatedAnswers = storedWrongAnswers.slice(
+          offset,
+          offset + limit
+        );
+        const totalRecords = storedWrongAnswers.length;
+        const totalPages = Math.ceil(totalRecords / limit);
+
+        setWrongAnswers(paginatedAnswers);
+        setPagination({
+          currentPage: page,
+          totalPages,
+          totalRecords,
+          limit,
+        });
       }
     } catch (error) {
       console.error("틀린 문제 로드 오류:", error);
@@ -96,16 +123,41 @@ export default function WrongAnswersPage() {
     return String(answer);
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">인증 중...</p>
-        </div>
-      </div>
-    );
-  }
+  const formatQuestionType = (type: string): string => {
+    switch (type) {
+      case "multiple-choice":
+        return "객관식";
+      case "true-false":
+        return "참/거짓";
+      case "fill-in-the-blank":
+        return "빈칸 채우기";
+      default:
+        return type;
+    }
+  };
+
+  // 게스트 사용자도 오답 노트를 볼 수 있도록 수정
+  // if (!user) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="text-6xl mb-4">📝</div>
+  //         <h2 className="text-2xl font-bold text-gray-900 mb-4">
+  //           게스트 오답 노트
+  //         </h2>
+  //         <p className="text-gray-600 mb-6">
+  //           로컬에 저장된 틀린 문제들을 확인할 수 있습니다.
+  //         </p>
+  //         <button
+  //           onClick={() => router.push("/login")}
+  //           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+  //         >
+  //           로그인하여 클라우드에 저장하기
+  //         </button>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   if (isLoading) {
     return (
@@ -204,6 +256,7 @@ export default function WrongAnswersPage() {
                           </h3>
                           <p className="text-sm text-gray-500">
                             문제 {wrongAnswer.question_index + 1} •{" "}
+                            {formatQuestionType(wrongAnswer.question_type)} •{" "}
                             {formatDate(wrongAnswer.created_at)}
                           </p>
                         </div>

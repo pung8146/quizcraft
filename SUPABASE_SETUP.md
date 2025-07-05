@@ -67,13 +67,14 @@ CREATE TRIGGER update_quiz_records_updated_at
 ### 1-2. 틀린 문제 저장 테이블
 
 ```sql
--- 틀린 문제를 저장할 테이블 생성
+-- 틀린 문제를 저장할 테이블 생성 (문제별 개별 저장)
 CREATE TABLE wrong_answers (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  quiz_id VARCHAR(255) NOT NULL, -- 퀴즈 ID (UUID 또는 문자열)
+  quiz_record_id UUID REFERENCES quiz_records(id) ON DELETE CASCADE, -- 퀴즈 기록 참조
   quiz_title VARCHAR(255) NOT NULL, -- 퀴즈 제목
   question_index INTEGER NOT NULL, -- 문제 번호 (0부터 시작)
+  question_type VARCHAR(50) NOT NULL, -- 문제 유형 (multiple-choice, true-false, fill-in-the-blank)
   question_text TEXT NOT NULL, -- 문제 내용
   user_answer TEXT NOT NULL, -- 사용자 답안
   correct_answer TEXT NOT NULL, -- 정답
@@ -83,8 +84,9 @@ CREATE TABLE wrong_answers (
 
 -- 인덱스 생성 (성능 최적화)
 CREATE INDEX idx_wrong_answers_user_id ON wrong_answers(user_id);
+CREATE INDEX idx_wrong_answers_quiz_record_id ON wrong_answers(quiz_record_id);
 CREATE INDEX idx_wrong_answers_created_at ON wrong_answers(created_at);
-CREATE INDEX idx_wrong_answers_quiz_id ON wrong_answers(quiz_id);
+CREATE INDEX idx_wrong_answers_question_index ON wrong_answers(question_index);
 
 -- Row Level Security (RLS) 활성화
 ALTER TABLE wrong_answers ENABLE ROW LEVEL SECURITY;
