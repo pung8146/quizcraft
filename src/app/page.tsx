@@ -149,7 +149,12 @@ export default function HomePage() {
         }
 
         // URL 모드에서는 이미 API에서 퀴즈 생성이 완료되었으므로 바로 이동
-        router.push(`/quiz/${slug}`);
+        // 로그인한 사용자의 경우 저장된 레코드의 실제 ID를 사용
+        if (user && result.savedRecord) {
+          router.push(`/quiz/${result.savedRecord.id}`);
+        } else {
+          router.push(`/quiz/${slug}`);
+        }
         return;
       } else {
         // 텍스트 모드 처리
@@ -207,6 +212,9 @@ export default function HomePage() {
                   "✅ 퀴즈가 데이터베이스에 성공적으로 저장되었습니다:",
                   result.savedRecord.id
                 );
+                // 저장된 레코드의 실제 ID를 사용하여 리다이렉트
+                router.push(`/quiz/${result.savedRecord.id}`);
+                return;
               }
             }
           }

@@ -58,6 +58,14 @@ export default function QuizPage() {
           return;
         } else {
           console.log("❌ 데이터베이스에서 퀴즈를 찾을 수 없음:", dbError);
+          // UUID 형식이 아닌 경우 다른 방법으로 시도
+          if (
+            dbError &&
+            dbError.includes("invalid input syntax for type uuid")
+          ) {
+            console.log("⚠️ UUID 형식이 아닌 ID, 다른 방법으로 조회 시도...");
+            // 여기서 다른 조회 방법을 시도할 수 있습니다
+          }
           setError(
             "퀴즈를 찾을 수 없습니다. 삭제되었거나 존재하지 않을 수 있습니다."
           );
@@ -347,6 +355,11 @@ export default function QuizPage() {
           console.log(
             "❌ 퀴즈 기록을 찾을 수 없어 틀린 문제를 저장할 수 없습니다."
           );
+          // UUID 형식이 아닌 경우 다른 방법으로 시도
+          if (slug && !slug.includes("-")) {
+            console.log("⚠️ UUID 형식이 아닌 ID, 다른 조회 방법 시도...");
+            // 여기서 다른 조회 방법을 시도할 수 있습니다
+          }
           return;
         }
 
