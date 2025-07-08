@@ -116,6 +116,31 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
             </Link>
           </li>
 
+          {/* 즐겨찾기 - 로그인한 사용자만 */}
+          {user && (
+            <li>
+              <Link
+                href="/favorites"
+                className={`flex items-center p-2 rounded-lg ${
+                  pathname === "/favorites"
+                    ? activeLinkClasses
+                    : inactiveLinkClasses
+                }`}
+              >
+                <svg
+                  className="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                <span className="ml-3">❤️ 즐겨찾기</span>
+              </Link>
+            </li>
+          )}
+
           {/* 문의게시판 - 모든 사용자가 접근 가능 */}
           <li>
             <Link

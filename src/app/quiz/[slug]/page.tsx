@@ -6,6 +6,7 @@ import { GeneratedQuiz, QuizQuestion } from "@/lib/openai";
 import { supabase } from "@/lib/supabase";
 import { getQuizRecord } from "@/lib/database";
 import { useAuth } from "@/components/AuthProvider";
+import { useToastHelpers } from "@/hooks/useToast";
 
 interface QuizAnswer {
   questionIndex: number;
@@ -29,10 +30,105 @@ export default function QuizPage() {
   const [hasSavedWrongAnswers, setHasSavedWrongAnswers] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [isKeyPointsOpen, setIsKeyPointsOpen] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+  const { showSuccess, showError } = useToastHelpers();
 
   useEffect(() => {
     loadQuizContent();
   }, [slug]);
+
+  // 즐겨찾기 상태 확인
+  useEffect(() => {
+    if (user && slug) {
+      checkFavoriteStatus();
+    }
+  }, [user, slug]);
+
+  const checkFavoriteStatus = async () => {
+    if (!user) return;
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) return;
+
+      const response = await fetch(`/api/favorites?quizId=${slug}`, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setIsFavorite(result.isFavorite);
+      }
+    } catch (error) {
+      console.error("즐겨찾기 상태 확인 오류:", error);
+    }
+  };
+
+  const toggleFavorite = async () => {
+    if (!user) {
+      showError(
+        "로그인 필요",
+        "즐겨찾기 기능을 사용하려면 로그인이 필요합니다."
+      );
+      return;
+    }
+
+    try {
+      setIsTogglingFavorite(true);
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        showError("인증 오류", "인증이 필요합니다.");
+        return;
+      }
+
+      const method = isFavorite ? "DELETE" : "POST";
+      const response = await fetch("/api/favorites", {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ quizId: slug }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "즐겨찾기 토글에 실패했습니다.");
+      }
+
+      if (result.success) {
+        setIsFavorite(!isFavorite);
+        showSuccess(
+          isFavorite ? "즐겨찾기 제거" : "즐겨찾기 추가",
+          isFavorite
+            ? "즐겨찾기에서 제거되었습니다."
+            : "즐겨찾기에 추가되었습니다."
+        );
+      }
+    } catch (error) {
+      console.error("즐겨찾기 토글 오류:", error);
+      showError(
+        "즐겨찾기 오류",
+        error instanceof Error
+          ? error.message
+          : "즐겨찾기 처리 중 오류가 발생했습니다."
+      );
+    } finally {
+      setIsTogglingFavorite(false);
+    }
+  };
 
   const extractTitleFromContent = (content: string): string => {
     const lines = content.split("\n");
@@ -320,6 +416,47 @@ export default function QuizPage() {
     return Math.round((correctAnswers / quizData.questions.length) * 100);
   };
 
+  // 사용자 답안을 표시하는 함수
+  const renderUserAnswer = (
+    question: QuizQuestion,
+    userAnswer: string | number | boolean | undefined
+  ) => {
+    if (userAnswer === undefined) return "답안 없음";
+
+    switch (question.type) {
+      case "multiple-choice":
+        if (typeof userAnswer === "number" && question.options) {
+          return `${userAnswer + 1}. ${question.options[userAnswer]}`;
+        }
+        return String(userAnswer);
+      case "true-false":
+        return userAnswer ? "참 (True)" : "거짓 (False)";
+      case "fill-in-the-blank":
+        return String(userAnswer);
+      default:
+        return String(userAnswer);
+    }
+  };
+
+  // 정답을 표시하는 함수
+  const renderCorrectAnswer = (question: QuizQuestion) => {
+    switch (question.type) {
+      case "multiple-choice":
+        if (typeof question.correctAnswer === "number" && question.options) {
+          return `${question.correctAnswer + 1}. ${
+            question.options[question.correctAnswer]
+          }`;
+        }
+        return String(question.correctAnswer);
+      case "true-false":
+        return question.correctAnswer ? "참 (True)" : "거짓 (False)";
+      case "fill-in-the-blank":
+        return String(question.correctAnswer);
+      default:
+        return String(question.correctAnswer);
+    }
+  };
+
   const saveWrongAnswers = async () => {
     if (!quizData) return;
 
@@ -496,17 +633,68 @@ export default function QuizPage() {
                 const userAnswer = userAnswers.find(
                   (a) => a.questionIndex === index
                 );
+                const isCorrect = userAnswer?.isCorrect;
+
                 return (
-                  <div key={index} className="border rounded-lg p-4">
+                  <div
+                    key={index}
+                    className={`border rounded-lg p-4 ${
+                      !isCorrect
+                        ? "border-red-200 bg-red-50"
+                        : "border-gray-200 bg-white"
+                    }`}
+                  >
                     <div className="flex items-center mb-2">
                       <span
-                        className={`text-2xl mr-2 ${
-                          userAnswer?.isCorrect ? "✅" : "❌"
-                        }`}
+                        className={`text-2xl mr-2 ${isCorrect ? "✅" : "❌"}`}
                       ></span>
-                      <span className="font-semibold">문제 {index + 1}</span>
+                      <span
+                        className={`font-semibold ${
+                          !isCorrect ? "text-red-700" : "text-gray-900"
+                        }`}
+                      >
+                        문제 {index + 1}
+                      </span>
                     </div>
-                    <p className="mb-2">{question.question}</p>
+                    <p
+                      className={`mb-3 ${
+                        !isCorrect ? "text-red-800" : "text-gray-900"
+                      }`}
+                    >
+                      {question.question}
+                    </p>
+
+                    {/* 답안 표시 섹션 */}
+                    <div className="space-y-2 mb-3">
+                      {/* 사용자 답안 */}
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium text-gray-600 mr-2">
+                          내 답안:
+                        </span>
+                        <span
+                          className={`px-2 py-1 rounded text-sm font-medium ${
+                            isCorrect
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {renderUserAnswer(question, userAnswer?.answer)}
+                        </span>
+                      </div>
+
+                      {/* 틀린 경우에만 정답 표시 */}
+                      {!isCorrect && (
+                        <div className="flex items-center">
+                          <span className="text-sm font-medium text-gray-600 mr-2">
+                            정답:
+                          </span>
+                          <span className="px-2 py-1 rounded text-sm font-medium bg-green-100 text-green-800">
+                            {renderCorrectAnswer(question)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
                     {question.explanation && (
                       <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
                         💡 {question.explanation}
@@ -531,10 +719,13 @@ export default function QuizPage() {
                 📝 오답 노트 보기
               </button>
               <button
-                onClick={() => router.push("/")}
-                className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                onClick={() => {
+                  const url = window.location.href;
+                  navigator.clipboard.writeText(url);
+                }}
               >
-                새 퀴즈 만들기
+                공유하기
               </button>
             </div>
           </div>
@@ -597,7 +788,39 @@ export default function QuizPage() {
         {/* 퀴즈 섹션 */}
         <div className="bg-white rounded-lg shadow-sm p-6 sm:p-8">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">📘 퀴즈</h1>
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold">📘 퀴즈</h1>
+              {user && (
+                <button
+                  onClick={toggleFavorite}
+                  disabled={isTogglingFavorite}
+                  className={`p-2 rounded-full transition-colors ${
+                    isFavorite
+                      ? "text-red-500 hover:text-red-700 hover:bg-red-50"
+                      : "text-gray-400 hover:text-red-500 hover:bg-red-50"
+                  } disabled:opacity-50`}
+                  title={isFavorite ? "즐겨찾기에서 제거" : "즐겨찾기에 추가"}
+                >
+                  {isTogglingFavorite ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-500"></div>
+                  ) : (
+                    <svg
+                      className="h-6 w-6"
+                      fill={isFavorite ? "currentColor" : "none"}
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
+                    </svg>
+                  )}
+                </button>
+              )}
+            </div>
             <span className="text-sm text-gray-500">
               {currentQuestionIndex + 1} / {quizData.questions.length}
             </span>
