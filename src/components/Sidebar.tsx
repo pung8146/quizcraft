@@ -64,7 +64,7 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
-                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                <path d="M10 0a10 10 0 1 0 10 10A10.011 10.011 0 0 0 10 0Zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 13a8.949 8.949 0 0 1-4.951-1.488A3.987 3.987 0 0 1 9 13h2a3.987 3.987 0 0 1 3.951 3.512A8.949 8.949 0 0 1 10 18Z" />
               </svg>
               <span className="ml-3">퀴즈 생성</span>
             </Link>
@@ -110,9 +110,9 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
-                <path d="M10 0a10 10 0 1 0 10 10A10.011 10.011 0 0 0 10 0Zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 13a8.949 8.949 0 0 1-4.951-1.488A3.987 3.987 0 0 1 9 13h2a3.987 3.987 0 0 1 3.951 3.512A8.949 8.949 0 0 1 10 18Z" />
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="ml-3">📝 오답 노트</span>
+              <span className="ml-3">오답 노트</span>
             </Link>
           </li>
 
@@ -136,7 +136,7 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
                 >
                   <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
-                <span className="ml-3">❤️ 즐겨찾기</span>
+                <span className="ml-3">즐겨찾기</span>
               </Link>
             </li>
           )}
@@ -158,7 +158,8 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
-                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
               </svg>
               <span className="ml-3">문의게시판</span>
             </Link>
@@ -197,7 +198,19 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
               href="/login"
               className="flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors"
             >
-              <span className="mr-2">🔐</span>
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
               로그인하기
             </Link>
           </div>
