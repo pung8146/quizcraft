@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/components/AuthProvider';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/components/AuthProvider";
 
 interface Inquiry {
   id: string;
@@ -31,10 +31,10 @@ export default function InquiryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [formData, setFormData] = useState<InquiryFormData>({
-    title: '',
-    content: '',
-    author_name: user?.user_metadata?.name || user?.email || '',
-    email: user?.email || '',
+    title: "",
+    content: "",
+    author_name: user?.user_metadata?.name || user?.email || "",
+    email: user?.email || "",
     is_public: true,
   });
 
@@ -43,8 +43,8 @@ export default function InquiryPage() {
     if (user) {
       setFormData((prev) => ({
         ...prev,
-        author_name: user?.user_metadata?.name || user?.email || '',
-        email: user?.email || '',
+        author_name: user?.user_metadata?.name || user?.email || "",
+        email: user?.email || "",
       }));
     }
   }, [user]);
@@ -61,10 +61,10 @@ export default function InquiryPage() {
         setCurrentPage(result.data.pagination.currentPage);
         setTotalPages(result.data.pagination.totalPages);
       } else {
-        console.error('문의글 불러오기 실패:', result.error);
+        console.error("문의글 불러오기 실패:", result.error);
       }
     } catch (error) {
-      console.error('문의글 불러오기 오류:', error);
+      console.error("문의글 불러오기 오류:", error);
     } finally {
       setLoading(false);
     }
@@ -83,7 +83,7 @@ export default function InquiryPage() {
       !formData.content.trim() ||
       !formData.author_name.trim()
     ) {
-      alert('제목, 내용, 작성자명을 모두 입력해주세요.');
+      alert("제목, 내용, 작성자명을 모두 입력해주세요.");
       return;
     }
 
@@ -91,14 +91,14 @@ export default function InquiryPage() {
       setSubmitting(true);
 
       const headers: HeadersInit = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       };
 
       // 로그인한 사용자의 경우 토큰 추가
       if (user) {
         const {
           data: { session },
-        } = await import('@/lib/supabase').then(({ supabase }) =>
+        } = await import("@/lib/supabase").then(({ supabase }) =>
           supabase.auth.getSession()
         );
         if (session?.access_token) {
@@ -106,31 +106,36 @@ export default function InquiryPage() {
         }
       }
 
-      const response = await fetch('/api/inquiries', {
-        method: 'POST',
+      // 디버깅 로그 추가
+      console.log("📤 클라이언트에서 전송하는 데이터:", formData);
+
+      const response = await fetch("/api/inquiries", {
+        method: "POST",
         headers,
         body: JSON.stringify(formData),
       });
 
       const result = await response.json();
 
+      console.log("📥 서버 응답:", result);
+
       if (result.success) {
-        alert('문의글이 성공적으로 등록되었습니다.');
+        alert("문의글이 성공적으로 등록되었습니다.");
         setFormData({
-          title: '',
-          content: '',
-          author_name: user?.user_metadata?.name || user?.email || '',
-          email: user?.email || '',
+          title: "",
+          content: "",
+          author_name: user?.user_metadata?.name || user?.email || "",
+          email: user?.email || "",
           is_public: true,
         });
         setShowForm(false);
         fetchInquiries(); // 목록 새로고침
       } else {
-        alert(result.error || '문의글 등록에 실패했습니다.');
+        alert(result.error || "문의글 등록에 실패했습니다.");
       }
     } catch (error) {
-      console.error('문의글 작성 오류:', error);
-      alert('문의글 작성 중 오류가 발생했습니다.');
+      console.error("문의글 작성 오류:", error);
+      alert("문의글 작성 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -138,21 +143,21 @@ export default function InquiryPage() {
 
   // 날짜 포맷 함수
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Date(dateString).toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   // 상태 표시 함수
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      pending: { text: '대기중', color: 'bg-yellow-100 text-yellow-800' },
-      answered: { text: '답변완료', color: 'bg-green-100 text-green-800' },
-      closed: { text: '종료', color: 'bg-gray-100 text-gray-800' },
+      pending: { text: "대기중", color: "bg-yellow-100 text-yellow-800" },
+      answered: { text: "답변완료", color: "bg-green-100 text-green-800" },
+      closed: { text: "종료", color: "bg-gray-100 text-gray-800" },
     };
 
     const statusInfo =
@@ -181,7 +186,7 @@ export default function InquiryPage() {
           onClick={() => setShowForm(!showForm)}
           className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
         >
-          {showForm ? '목록보기' : '문의하기'}
+          {showForm ? "목록보기" : "문의하기"}
         </button>
       </div>
 
@@ -296,7 +301,7 @@ export default function InquiryPage() {
                 disabled={submitting}
                 className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-md hover:shadow-lg font-medium"
               >
-                {submitting ? '등록중...' : '문의 등록'}
+                {submitting ? "등록중..." : "문의 등록"}
               </button>
               <button
                 type="button"
@@ -375,8 +380,8 @@ export default function InquiryPage() {
                 onClick={() => fetchInquiries(page)}
                 className={`px-4 py-2 rounded-lg transition-colors ${
                   page === currentPage
-                    ? 'bg-blue-600 text-white border border-blue-600'
-                    : 'bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300'
+                    ? "bg-blue-600 text-white border border-blue-600"
+                    : "bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300"
                 }`}
               >
                 {page}
