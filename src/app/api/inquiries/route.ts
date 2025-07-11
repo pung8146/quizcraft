@@ -9,15 +9,50 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const offset = (page - 1) * limit;
 
-    // 공개된 문의글만 조회 (최신순)
+    // 로그인 사용자 확인
+    const authHeader = request.headers.get("Authorization");
+    let user_id = null;
+    let userSupabase = supabase;
+
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser(token);
+      if (!authError && user) {
+        user_id = user.id;
+
+        // 사용자별 Supabase 클라이언트 생성
+        userSupabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          {
+            global: {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          }
+        );
+      }
+    }
+
+    let query = userSupabase.from("inquiries").select("*", { count: "exact" });
+
+    if (user_id) {
+      // 로그인한 사용자: 공개 글 + 자신의 비공개 글
+      query = query.or(`is_public.eq.true,user_id.eq.${user_id}`);
+    } else {
+      // 비로그인 사용자: 공개 글만
+      query = query.eq("is_public", true);
+    }
+
     const {
       data: inquiries,
       error,
       count,
-    } = await supabase
-      .from("inquiries")
-      .select("*", { count: "exact" })
-      .eq("is_public", true)
+    } = await query
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 

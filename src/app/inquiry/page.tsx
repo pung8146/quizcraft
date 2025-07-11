@@ -10,6 +10,7 @@ interface Inquiry {
   author_name: string;
   email?: string;
   status: string;
+  is_public?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -53,7 +54,24 @@ export default function InquiryPage() {
   const fetchInquiries = async (page: number = 1) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/inquiries?page=${page}&limit=10`);
+
+      const headers: HeadersInit = {};
+
+      // 로그인한 사용자의 경우 토큰 추가
+      if (user) {
+        const {
+          data: { session },
+        } = await import("@/lib/supabase").then(({ supabase }) =>
+          supabase.auth.getSession()
+        );
+        if (session?.access_token) {
+          headers.Authorization = `Bearer ${session.access_token}`;
+        }
+      }
+
+      const response = await fetch(`/api/inquiries?page=${page}&limit=10`, {
+        headers,
+      });
       const result = await response.json();
 
       if (result.success) {
@@ -336,7 +354,13 @@ export default function InquiryPage() {
                 <h3 className="text-lg font-semibold text-gray-900">
                   {inquiry.title}
                 </h3>
-                {getStatusBadge(inquiry.status)}
+                {inquiry.is_public ? (
+                  getStatusBadge(inquiry.status)
+                ) : (
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                    비공개
+                  </span>
+                )}
               </div>
 
               <div className="text-sm text-gray-600 mb-3">
