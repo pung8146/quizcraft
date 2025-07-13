@@ -11,16 +11,54 @@ interface SidebarProps {
   isMobileMenuOpen: boolean;
 }
 
+// 스켈레톤 컴포넌트
+const SkeletonItem = () => (
+  <div className="flex items-center p-2 rounded-lg animate-pulse">
+    <div className="w-5 h-5 bg-gray-200 rounded"></div>
+    <div className="ml-3 h-4 bg-gray-200 rounded w-20"></div>
+  </div>
+);
+
+// 사용자 정보 스켈레톤
+const UserSkeleton = () => (
+  <div className="flex items-center space-x-4 animate-pulse">
+    <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+    <div className="flex-1 min-w-0">
+      <div className="h-4 bg-gray-200 rounded w-24 mb-1"></div>
+      <div className="h-3 bg-gray-200 rounded w-16"></div>
+    </div>
+  </div>
+);
+
 export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
   const { signOut } = useAuth();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
-    supabase.auth.onAuthStateChange((_event, session) => {
+    const getUser = async () => {
+      try {
+        setIsLoading(true);
+        const { data } = await supabase.auth.getUser();
+        setUser(data.user);
+      } catch (error) {
+        console.error("사용자 정보 로딩 오류:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    getUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
+      setIsLoading(false);
     });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleLogout = async () => {
@@ -116,31 +154,6 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
             </Link>
           </li>
 
-          {/* 즐겨찾기 - 로그인한 사용자만 */}
-          {user && (
-            <li>
-              <Link
-                href="/favorites"
-                className={`flex items-center p-2 rounded-lg ${
-                  pathname === "/favorites"
-                    ? activeLinkClasses
-                    : inactiveLinkClasses
-                }`}
-              >
-                <svg
-                  className="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-                <span className="ml-3">즐겨찾기</span>
-              </Link>
-            </li>
-          )}
-
           {/* 문의게시판 - 모든 사용자가 접근 가능 */}
           <li>
             <Link
@@ -165,8 +178,41 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
             </Link>
           </li>
 
+          {/* 즐겨찾기 - 로그인한 사용자만 */}
+          {isLoading ? (
+            <li>
+              <SkeletonItem />
+            </li>
+          ) : user ? (
+            <li>
+              <Link
+                href="/favorites"
+                className={`flex items-center p-2 rounded-lg ${
+                  pathname === "/favorites"
+                    ? activeLinkClasses
+                    : inactiveLinkClasses
+                }`}
+              >
+                <svg
+                  className="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                <span className="ml-3">즐겨찾기</span>
+              </Link>
+            </li>
+          ) : null}
+
           {/* 마이페이지 - 로그인한 사용자만 */}
-          {user && (
+          {isLoading ? (
+            <li>
+              <SkeletonItem />
+            </li>
+          ) : user ? (
             <li>
               <Link
                 href="/mypage"
@@ -188,11 +234,11 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
                 <span className="ml-3">마이페이지</span>
               </Link>
             </li>
-          )}
+          ) : null}
         </ul>
 
         {/* 게스트 사용자를 위한 간단한 안내 */}
-        {!user && (
+        {!isLoading && !user && (
           <div className="mt-8">
             <Link
               href="/login"
@@ -217,7 +263,9 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
         )}
 
         <div className="absolute bottom-0 left-0 w-full p-4 border-t">
-          {user ? (
+          {isLoading ? (
+            <UserSkeleton />
+          ) : user ? (
             <div className="flex items-center space-x-4">
               {user.user_metadata?.avatar_url && (
                 <img
