@@ -91,12 +91,12 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
           <li>
             <Link
               href="/"
-              className={`flex items-center p-2 rounded-lg ${
+              className={`flex items-center min-h-[40px] p-2 rounded-lg ${
                 pathname === "/" ? activeLinkClasses : inactiveLinkClasses
               }`}
             >
               <svg
-                className="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                className="w-5 h-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 overflow-visible"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="currentColor"
@@ -112,14 +112,14 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
           <li>
             <Link
               href="/history"
-              className={`flex items-center p-2 rounded-lg ${
+              className={`flex items-center min-h-[40px] p-2 rounded-lg ${
                 pathname === "/history"
                   ? activeLinkClasses
                   : inactiveLinkClasses
               }`}
             >
               <svg
-                className="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                className="w-5 h-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 overflow-visible"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="currentColor"
@@ -135,14 +135,14 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
           <li>
             <Link
               href="/wrong-answers"
-              className={`flex items-center p-2 rounded-lg ${
+              className={`flex items-center min-h-[40px] p-2 rounded-lg ${
                 pathname === "/wrong-answers"
                   ? activeLinkClasses
                   : inactiveLinkClasses
               }`}
             >
               <svg
-                className="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                className="w-5 h-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 overflow-visible"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="currentColor"
@@ -158,14 +158,14 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
           <li>
             <Link
               href="/inquiry"
-              className={`flex items-center p-2 rounded-lg ${
+              className={`flex items-center min-h-[40px] p-2 rounded-lg ${
                 pathname === "/inquiry"
                   ? activeLinkClasses
                   : inactiveLinkClasses
               }`}
             >
               <svg
-                className="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                className="w-5 h-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 overflow-visible"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="currentColor"
@@ -187,14 +187,14 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
             <li>
               <Link
                 href="/favorites"
-                className={`flex items-center p-2 rounded-lg ${
+                className={`flex items-center min-h-[40px] p-2 rounded-lg ${
                   pathname === "/favorites"
                     ? activeLinkClasses
                     : inactiveLinkClasses
                 }`}
               >
                 <svg
-                  className="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                  className="w-5 h-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 overflow-visible"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="currentColor"
@@ -216,14 +216,14 @@ export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
             <li>
               <Link
                 href="/mypage"
-                className={`flex items-center p-2 rounded-lg ${
+                className={`flex items-center min-h-[40px] p-2 rounded-lg ${
                   pathname === "/mypage"
                     ? activeLinkClasses
                     : inactiveLinkClasses
                 }`}
               >
                 <svg
-                  className="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                  className="w-5 h-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 overflow-visible"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="currentColor"
