@@ -12,6 +12,7 @@ interface RequestBody {
       multipleChoice: boolean;
       trueOrFalse: boolean;
       fillInBlank: boolean;
+      sentenceCompletion: boolean;
     };
     questionCount: number;
   };

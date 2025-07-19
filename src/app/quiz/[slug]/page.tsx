@@ -403,6 +403,37 @@ export default function QuizPage() {
           </div>
         );
 
+      case "sentence-completion":
+        return (
+          <div className="space-y-4">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              {question.question}
+            </h3>
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                주어진 단어들을 사용하여 올바른 문장을 만들어주세요:
+              </p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {question.options?.map((word, wordIndex) => (
+                  <span
+                    key={wordIndex}
+                    className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium"
+                  >
+                    {word}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <input
+              type="text"
+              value={(userAnswer?.answer as string) || ""}
+              onChange={(e) => handleAnswer(e.target.value)}
+              className="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
+              placeholder="단어들을 조합하여 문장을 만들어주세요..."
+            />
+          </div>
+        );
+
       default:
         return null;
     }
@@ -433,6 +464,8 @@ export default function QuizPage() {
         return userAnswer ? "참 (True)" : "거짓 (False)";
       case "fill-in-the-blank":
         return String(userAnswer);
+      case "sentence-completion":
+        return String(userAnswer);
       default:
         return String(userAnswer);
     }
@@ -451,6 +484,8 @@ export default function QuizPage() {
       case "true-false":
         return question.correctAnswer ? "참 (True)" : "거짓 (False)";
       case "fill-in-the-blank":
+        return String(question.correctAnswer);
+      case "sentence-completion":
         return String(question.correctAnswer);
       default:
         return String(question.correctAnswer);

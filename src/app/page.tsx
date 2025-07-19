@@ -11,6 +11,7 @@ interface QuizOptions {
     multipleChoice: boolean;
     trueOrFalse: boolean;
     fillInBlank: boolean;
+    sentenceCompletion: boolean;
   };
   questionCount: number;
 }
@@ -23,6 +24,7 @@ export default function HomePage() {
       multipleChoice: true,
       trueOrFalse: true,
       fillInBlank: true,
+      sentenceCompletion: true,
     },
     questionCount: 5,
   });
@@ -322,6 +324,23 @@ export default function HomePage() {
                     className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <span className="text-sm text-gray-700">🔤 빈칸 추론</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={quizOptions.types.sentenceCompletion}
+                    onChange={(e) =>
+                      setQuizOptions((prev) => ({
+                        ...prev,
+                        types: {
+                          ...prev.types,
+                          sentenceCompletion: e.target.checked,
+                        },
+                      }))
+                    }
+                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm text-gray-700">📝 문장 완성</span>
                 </label>
               </div>
             </div>

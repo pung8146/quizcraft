@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import OpenAI from "openai";
 
 // OpenAI 클라이언트를 지연 초기화하여 빌드 타임 오류 방지
 let openaiClient: OpenAI | null = null;
@@ -6,7 +6,7 @@ let openaiClient: OpenAI | null = null;
 const getOpenAIClient = (): OpenAI => {
   if (!openaiClient) {
     if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY 환경변수가 설정되지 않았습니다.');
+      throw new Error("OPENAI_API_KEY 환경변수가 설정되지 않았습니다.");
     }
     openaiClient = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
@@ -16,7 +16,11 @@ const getOpenAIClient = (): OpenAI => {
 };
 
 export interface QuizQuestion {
-  type: 'multiple-choice' | 'true-false' | 'fill-in-the-blank';
+  type:
+    | "multiple-choice"
+    | "true-false"
+    | "fill-in-the-blank"
+    | "sentence-completion";
   question: string;
   options?: string[];
   correctAnswer: string | number;
@@ -39,6 +43,7 @@ interface QuizOptions {
     multipleChoice: boolean;
     trueOrFalse: boolean;
     fillInBlank: boolean;
+    sentenceCompletion: boolean;
   };
   questionCount: number;
 }
@@ -54,7 +59,7 @@ export async function generateTitleAndTag(
   if (content.length > 3000) {
     const firstPart = content.substring(0, 2000);
     const lastPart = content.substring(content.length - 500);
-    analysisContent = firstPart + '\n\n[...중략...]\n\n' + lastPart;
+    analysisContent = firstPart + "\n\n[...중략...]\n\n" + lastPart;
     console.log(
       `📏 내용 길이 조정: ${content.length}자 → ${analysisContent.length}자`
     );
@@ -94,15 +99,15 @@ ${analysisContent}
   try {
     const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4-turbo',
+      model: "gpt-4.1-nano",
       messages: [
         {
-          role: 'system',
+          role: "system",
           content:
-            '당신은 콘텐츠 큐레이션 전문가입니다. 주어진 텍스트의 내용을 깊이 분석하여, 원본 제목과는 다른 내용 중심의 의미있는 제목을 만들어야 합니다. 단순히 원본 제목을 재사용하지 말고, 텍스트에서 다루는 핵심 주제, 방법론, 인사이트를 바탕으로 구체적이고 유용한 제목을 생성하세요. 응답은 반드시 유효한 JSON 형식으로만 제공하세요.',
+            "당신은 콘텐츠 큐레이션 전문가입니다. 주어진 텍스트의 내용을 깊이 분석하여, 원본 제목과는 다른 내용 중심의 의미있는 제목을 만들어야 합니다. 단순히 원본 제목을 재사용하지 말고, 텍스트에서 다루는 핵심 주제, 방법론, 인사이트를 바탕으로 구체적이고 유용한 제목을 생성하세요. 응답은 반드시 유효한 JSON 형식으로만 제공하세요.",
         },
         {
-          role: 'user',
+          role: "user",
           content: prompt,
         },
       ],
@@ -112,17 +117,17 @@ ${analysisContent}
 
     const responseContent = completion.choices[0]?.message?.content;
     if (!responseContent) {
-      throw new Error('OpenAI API에서 응답을 받지 못했습니다.');
+      throw new Error("OpenAI API에서 응답을 받지 못했습니다.");
     }
 
     // 마크다운에서 JSON 추출
     let jsonString = responseContent;
-    if (responseContent.includes('```json')) {
+    if (responseContent.includes("```json")) {
       const jsonMatch = responseContent.match(/```json\s*([\s\S]*?)\s*```/);
       if (jsonMatch && jsonMatch[1]) {
         jsonString = jsonMatch[1].trim();
       }
-    } else if (responseContent.includes('```')) {
+    } else if (responseContent.includes("```")) {
       const jsonMatch = responseContent.match(/```\s*([\s\S]*?)\s*```/);
       if (jsonMatch && jsonMatch[1]) {
         jsonString = jsonMatch[1].trim();
@@ -133,17 +138,17 @@ ${analysisContent}
 
     // 데이터 검증
     if (!result.title || !result.tag) {
-      throw new Error('생성된 제목/태그 데이터가 올바르지 않습니다.');
+      throw new Error("생성된 제목/태그 데이터가 올바르지 않습니다.");
     }
 
     return result;
   } catch (error) {
-    console.error('제목/태그 생성 오류:', error);
+    console.error("제목/태그 생성 오류:", error);
 
     // 오류 발생시 기본값 반환
     return {
-      title: `퀴즈 - ${new Date().toLocaleDateString('ko-KR')}`,
-      tag: '일반',
+      title: `퀴즈 - ${new Date().toLocaleDateString("ko-KR")}`,
+      tag: "일반",
     };
   }
 }
@@ -158,6 +163,7 @@ export async function generateQuizFromContent(
       multipleChoice: true,
       trueOrFalse: true,
       fillInBlank: true,
+      sentenceCompletion: true,
     },
     questionCount: 5,
   };
@@ -166,9 +172,10 @@ export async function generateQuizFromContent(
 
   // 선택된 문제 유형들
   const selectedTypes = [];
-  if (quizOptions.types.multipleChoice) selectedTypes.push('객관식');
-  if (quizOptions.types.trueOrFalse) selectedTypes.push('참/거짓');
-  if (quizOptions.types.fillInBlank) selectedTypes.push('빈칸 추론');
+  if (quizOptions.types.multipleChoice) selectedTypes.push("객관식");
+  if (quizOptions.types.trueOrFalse) selectedTypes.push("참/거짓");
+  if (quizOptions.types.fillInBlank) selectedTypes.push("빈칸 추론");
+  if (quizOptions.types.sentenceCompletion) selectedTypes.push("문장 완성");
 
   const typeInstructions = [];
   if (quizOptions.types.multipleChoice) {
@@ -199,6 +206,16 @@ export async function generateQuizFromContent(
       "explanation": "정답 설명"
     }`);
   }
+  if (quizOptions.types.sentenceCompletion) {
+    typeInstructions.push(`
+    {
+      "type": "sentence-completion",
+      "question": "주어진 단어들을 사용하여 올바른 문장을 만들어주세요: '당신의 이름은 무엇입니까'를 영어로 하면?",
+      "options": ["name", "what", "your", "my", "daddy"],
+      "correctAnswer": "what your name",
+      "explanation": "정답 설명"
+    }`);
+  }
 
   const prompt = `
 다음 텍스트를 분석하여 요약, 핵심 포인트, 그리고 지정된 유형의 퀴즈를 생성해주세요.
@@ -208,13 +225,13 @@ ${content}
 
 퀴즈 생성 요구사항:
 - 총 문제 개수: ${quizOptions.questionCount}개
-- 포함할 문제 유형: ${selectedTypes.join(', ')}
+- 포함할 문제 유형: ${selectedTypes.join(", ")}
 
 다음 JSON 형식으로만 응답해주세요 (마크다운이나 다른 텍스트 없이 순수 JSON만):
 {
   "summary": "텍스트의 핵심 내용을 3-4문장으로 요약",
   "keyPoints": ["핵심 포인트 1", "핵심 포인트 2", "핵심 포인트 3"],
-  "questions": [${typeInstructions.join(',')}
+  "questions": [${typeInstructions.join(",")}
   ]
 }
 
@@ -222,25 +239,30 @@ ${content}
 - 총 ${
     quizOptions.questionCount
   }개의 문제를 생성하되, 선택된 유형(${selectedTypes.join(
-    ', '
+    ", "
   )})만 사용해주세요.
 - 각 유형이 골고루 분배되도록 해주세요.
 - 모든 문제는 한국어로 작성해주세요.
 - correctAnswer는 객관식의 경우 인덱스(0,1,2,3), 참/거짓의 경우 boolean, 빈칸추론의 경우 문자열로 설정해주세요.
+- 문장 완성 문제의 경우:
+  * question: "주어진 단어들을 사용하여 올바른 문장을 만들어주세요: [문제 설명]"
+  * options: 사용할 수 있는 단어들의 배열 (예: ["name", "what", "your", "my", "daddy"])
+  * correctAnswer: 올바른 문장 (예: "what your name")
+  * explanation: 왜 그 문장이 정답인지 설명
 `;
 
   try {
     const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4-turbo',
+      model: "gpt-4.1-nano",
       messages: [
         {
-          role: 'system',
+          role: "system",
           content:
-            '당신은 교육 전문가입니다. 주어진 텍스트를 분석하여 효과적인 학습 자료와 퀴즈를 생성합니다. 응답은 반드시 유효한 JSON 형식으로만 제공하세요. 마크다운 코드 블록이나 다른 텍스트를 포함하지 마세요.',
+            "당신은 교육 전문가입니다. 주어진 텍스트를 분석하여 효과적인 학습 자료와 퀴즈를 생성합니다. 응답은 반드시 유효한 JSON 형식으로만 제공하세요. 마크다운 코드 블록이나 다른 텍스트를 포함하지 마세요.",
         },
         {
-          role: 'user',
+          role: "user",
           content: prompt,
         },
       ],
@@ -250,40 +272,40 @@ ${content}
 
     const responseContent = completion.choices[0]?.message?.content;
     if (!responseContent) {
-      throw new Error('OpenAI API에서 응답을 받지 못했습니다.');
+      throw new Error("OpenAI API에서 응답을 받지 못했습니다.");
     }
 
     // 마크다운에서 JSON 추출
     let jsonString = responseContent;
 
     // ```json으로 감싸진 경우 제거
-    if (responseContent.includes('```json')) {
+    if (responseContent.includes("```json")) {
       const jsonMatch = responseContent.match(/```json\s*([\s\S]*?)\s*```/);
       if (jsonMatch && jsonMatch[1]) {
         jsonString = jsonMatch[1].trim();
       }
     }
     // ```로만 감싸진 경우 제거
-    else if (responseContent.includes('```')) {
+    else if (responseContent.includes("```")) {
       const jsonMatch = responseContent.match(/```\s*([\s\S]*?)\s*```/);
       if (jsonMatch && jsonMatch[1]) {
         jsonString = jsonMatch[1].trim();
       }
     }
 
-    console.log('추출된 JSON:', jsonString.substring(0, 200) + '...');
+    console.log("추출된 JSON:", jsonString.substring(0, 200) + "...");
 
     // JSON 파싱
     const result = JSON.parse(jsonString) as GeneratedQuiz;
 
     // 데이터 검증
     if (!result.summary || !result.keyPoints || !result.questions) {
-      throw new Error('생성된 퀴즈 데이터가 올바르지 않습니다.');
+      throw new Error("생성된 퀴즈 데이터가 올바르지 않습니다.");
     }
 
     return result;
   } catch (error) {
-    console.error('퀴즈 생성 오류:', error);
-    throw new Error('퀴즈 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+    console.error("퀴즈 생성 오류:", error);
+    throw new Error("퀴즈 생성 중 오류가 발생했습니다. 다시 시도해주세요.");
   }
 }
