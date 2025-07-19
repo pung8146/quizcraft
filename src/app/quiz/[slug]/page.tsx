@@ -411,26 +411,64 @@ export default function QuizPage() {
             </h3>
             <div className="mb-4">
               <p className="text-sm text-gray-600 mb-2">
-                주어진 단어들을 사용하여 올바른 문장을 만들어주세요:
+                주어진 단어들을 클릭하여 문장을 만들어주세요:
               </p>
               <div className="flex flex-wrap gap-2 mb-4">
-                {question.options?.map((word, wordIndex) => (
-                  <span
-                    key={wordIndex}
-                    className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium"
-                  >
-                    {word}
-                  </span>
-                ))}
+                {question.options?.map((word, wordIndex) => {
+                  const currentAnswer = (userAnswer?.answer as string) || "";
+                  const isSelected = currentAnswer.includes(word);
+
+                  return (
+                    <button
+                      key={wordIndex}
+                      onClick={() => {
+                        const currentAnswer =
+                          (userAnswer?.answer as string) || "";
+                        if (isSelected) {
+                          // 이미 선택된 단어라면 제거
+                          const newAnswer = currentAnswer
+                            .split(" ")
+                            .filter((w) => w !== word)
+                            .join(" ");
+                          handleAnswer(newAnswer);
+                        } else {
+                          // 선택되지 않은 단어라면 추가
+                          const newAnswer = currentAnswer
+                            ? `${currentAnswer} ${word}`
+                            : word;
+                          handleAnswer(newAnswer);
+                        }
+                      }}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
+                        isSelected
+                          ? "bg-blue-500 text-white shadow-md"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
+                      }`}
+                    >
+                      {word}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            <input
-              type="text"
-              value={(userAnswer?.answer as string) || ""}
-              onChange={(e) => handleAnswer(e.target.value)}
-              className="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
-              placeholder="단어들을 조합하여 문장을 만들어주세요..."
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={(userAnswer?.answer as string) || ""}
+                onChange={(e) => handleAnswer(e.target.value)}
+                className="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
+                placeholder="단어들을 클릭하거나 직접 입력하여 문장을 만들어주세요..."
+              />
+              {(userAnswer?.answer as string) && (
+                <button
+                  onClick={() => handleAnswer("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  title="입력 내용 지우기"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
         );
 
