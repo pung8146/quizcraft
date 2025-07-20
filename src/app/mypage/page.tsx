@@ -144,53 +144,6 @@ export default function MyPage() {
           </div>
         </div>
 
-        {/* 통계 카드들 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white border rounded-lg p-6 shadow-sm">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <span className="text-blue-600 text-lg">📊</span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">생성한 퀴즈</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {quizCount}개
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white border rounded-lg p-6 shadow-sm">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                  <span className="text-green-600 text-lg">✅</span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">활동 상태</p>
-                <p className="text-2xl font-bold text-gray-900">활성</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white border rounded-lg p-6 shadow-sm sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <span className="text-purple-600 text-lg">🏆</span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">레벨</p>
-                <p className="text-2xl font-bold text-gray-900">초보자</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* 빠른 액션 카드들 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <Link
@@ -257,35 +210,6 @@ export default function MyPage() {
               </div>
             </div>
           </Link>
-        </div>
-
-        {/* 계정 설정 섹션 */}
-        <div className="mt-8 bg-white border rounded-lg p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            계정 설정
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between py-2">
-              <div>
-                <p className="text-sm font-medium text-gray-700">계정 타입</p>
-                <p className="text-xs text-gray-500">
-                  현재 사용 중인 계정 타입
-                </p>
-              </div>
-              <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
-                무료 계정
-              </span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <div>
-                <p className="text-sm font-medium text-gray-700">데이터 저장</p>
-                <p className="text-xs text-gray-500">퀴즈 데이터 저장 방식</p>
-              </div>
-              <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
-                로컬 + 클라우드
-              </span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
