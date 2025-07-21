@@ -127,7 +127,7 @@ export default function MyPage() {
               <img
                 src={user.user_metadata.avatar_url}
                 alt="프로필 이미지"
-                className="w-20 h-20 rounded-full mx-auto sm:mx-0"
+                className="w-20 h-20 rounded-full mx-auto sm:mx-0 sm:me-6"
               />
             )}
             <div className="flex-1 text-center sm:text-left">
