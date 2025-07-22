@@ -388,18 +388,18 @@ export default function HomePage() {
             </label>
             <textarea
               id="content-input"
-              className="w-full h-48 sm:h-64 lg:h-72 border rounded-md p-3 sm:p-4 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400"
+              className="w-full h-48 sm:h-64 lg:h-72 border rounded-md p-3 sm:p-4 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 text-left placeholder:text-left"
               placeholder={`🔗 웹페이지 URL:
-                https://example.com/article
-                https://blog.example.com/post/123
-                
-                또는
-                
-                📄 텍스트 내용:
-                # 인공지능의 개념
-                인공지능(AI)은 컴퓨터가 인간의 지능을 모방하여 학습하고 추론하는 기술입니다...
-                
-                블로그 포스팅이나 기사 내용을 그대로 복사해서 붙여넣어도 됩니다.`}
+https://example.com/article
+https://blog.example.com/post/123
+
+또는
+
+📄 텍스트 내용:
+# 인공지능의 개념
+인공지능(AI)은 컴퓨터가 인간의 지능을 모방하여 학습하고 추론하는 기술입니다...
+
+블로그 포스팅이나 기사 내용을 그대로 복사해서 붙여넣어도 됩니다.`}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               disabled={isGenerating}
