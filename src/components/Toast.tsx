@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export interface ToastMessage {
   id: string;
@@ -21,45 +21,72 @@ const Toast = ({ message, onRemove }: ToastProps) => {
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(100);
 
+  // 개선: ref로 시간 및 애니메이션 ID 관리
+  const startTimeRef = useRef<number>(0);
+  const pausedTimeRef = useRef<number>(0);
+  const pauseStartRef = useRef<number | null>(null);
+  const rafIdRef = useRef<number | null>(null);
+  const duration = message.duration || 5000;
+
+  // 진행 바 업데이트 함수
+  const updateProgress = () => {
+    if (isPaused) {
+      if (pauseStartRef.current === null) {
+        pauseStartRef.current = Date.now();
+      }
+      rafIdRef.current = requestAnimationFrame(updateProgress);
+      return;
+    } else if (pauseStartRef.current !== null) {
+      // 일시정지 해제 시, 일시정지된 시간 누적
+      pausedTimeRef.current += Date.now() - pauseStartRef.current;
+      pauseStartRef.current = null;
+    }
+    const elapsed = Date.now() - startTimeRef.current - pausedTimeRef.current;
+    const remaining = Math.max(0, duration - elapsed);
+    const newProgress = (remaining / duration) * 100;
+    setProgress(newProgress);
+    if (remaining > 0) {
+      rafIdRef.current = requestAnimationFrame(updateProgress);
+    } else {
+      handleRemove();
+    }
+  };
+
   useEffect(() => {
+    setProgress(100);
+    setIsVisible(false);
+    setIsRemoving(false);
+    pausedTimeRef.current = 0;
+    pauseStartRef.current = null;
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+    }
     // 애니메이션을 위해 약간의 지연
     const showTimer = setTimeout(() => setIsVisible(true), 100);
-
-    const duration = message.duration || 5000;
-    const startTime = Date.now();
-    let pausedTime = 0;
-
-    // 진행 바 업데이트
-    const updateProgress = () => {
-      if (isPaused) {
-        pausedTime += 16; // ~60fps
-        requestAnimationFrame(updateProgress);
-        return;
-      }
-
-      const elapsed = Date.now() - startTime - pausedTime;
-      const remaining = Math.max(0, duration - elapsed);
-      const newProgress = (remaining / duration) * 100;
-
-      setProgress(newProgress);
-
-      if (remaining > 0) {
-        requestAnimationFrame(updateProgress);
-      } else {
-        handleRemove();
-      }
-    };
-
-    // 진행 바 시작
     const progressTimer = setTimeout(() => {
-      requestAnimationFrame(updateProgress);
+      startTimeRef.current = Date.now();
+      pausedTimeRef.current = 0;
+      pauseStartRef.current = null;
+      rafIdRef.current = requestAnimationFrame(updateProgress);
     }, 100);
-
     return () => {
       clearTimeout(showTimer);
       clearTimeout(progressTimer);
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
     };
-  }, [message.duration, isPaused]);
+    // message.duration만 의존성에 둔다 (isPaused 제거)
+  }, [message.duration]);
+
+  useEffect(() => {
+    // isPaused가 바뀔 때마다 updateProgress를 트리거
+    if (!isPaused && pauseStartRef.current !== null) {
+      // 일시정지 해제 시 즉시 진행 재개
+      updateProgress();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPaused]);
 
   const handleRemove = () => {
     setIsRemoving(true);
