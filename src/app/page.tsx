@@ -245,7 +245,7 @@ export default function HomePage() {
 
   // 입력된 내용이 URL인지 표시하는 헬퍼 함수
   const getInputStatus = () => {
-    if (!content.trim()) return "내용을 입력해주세요";
+    if (!content.trim()) return ``;
 
     const isUrl = isValidUrl(content.trim());
     if (isUrl) {
