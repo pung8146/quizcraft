@@ -90,7 +90,7 @@ export default function InquiryPage() {
 
   useEffect(() => {
     fetchInquiries();
-  }, []);
+  }, [user]);
 
   // 문의글 작성
   const handleSubmit = async (e: React.FormEvent) => {
