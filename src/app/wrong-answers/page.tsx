@@ -213,7 +213,7 @@ export default function WrongAnswersPage() {
 
           {wrongAnswers.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-6xl mb-4">🎉</div>
+              <div className="text-6xl mb-4">📚</div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">
                 아직 틀린 문제가 없습니다!
               </h2>
