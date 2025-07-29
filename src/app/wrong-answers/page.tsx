@@ -203,12 +203,6 @@ export default function WrongAnswersPage() {
                 틀린 문제들을 다시 한번 복습해보세요
               </p>
             </div>
-            <button
-              onClick={() => router.push("/")}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              홈으로
-            </button>
           </div>
 
           {wrongAnswers.length === 0 ? (
