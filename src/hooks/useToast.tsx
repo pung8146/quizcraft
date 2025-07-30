@@ -32,6 +32,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
       id,
     };
 
+    console.log("📢 Toast 추가됨:", newToast);
     setMessages((prev) => [...prev, newToast]);
   }, []);
 

@@ -53,6 +53,7 @@ const Toast = ({ message, onRemove }: ToastProps) => {
   };
 
   useEffect(() => {
+    console.log("🎬 Toast 렌더링 시작:", message.title);
     setProgress(100);
     setIsVisible(false);
     setIsRemoving(false);
@@ -62,7 +63,10 @@ const Toast = ({ message, onRemove }: ToastProps) => {
       cancelAnimationFrame(rafIdRef.current);
     }
     // 애니메이션을 위해 약간의 지연
-    const showTimer = setTimeout(() => setIsVisible(true), 100);
+    const showTimer = setTimeout(() => {
+      setIsVisible(true);
+      console.log("👁️ Toast 표시됨:", message.title);
+    }, 100);
     const progressTimer = setTimeout(() => {
       startTimeRef.current = Date.now();
       pausedTimeRef.current = 0;
@@ -153,6 +157,7 @@ const Toast = ({ message, onRemove }: ToastProps) => {
       `}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      style={{ zIndex: 10000 }}
     >
       <div
         className={`
@@ -225,7 +230,7 @@ interface ToastContainerProps {
 
 export const ToastContainer = ({ messages, onRemove }: ToastContainerProps) => {
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none">
+    <div className="fixed top-4 right-4 z-[9999] flex flex-col space-y-2 pointer-events-none">
       {messages.map((message) => (
         <div key={message.id} className="pointer-events-auto">
           <Toast message={message} onRemove={onRemove} />

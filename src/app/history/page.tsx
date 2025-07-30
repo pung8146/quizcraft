@@ -350,10 +350,14 @@ export default function HistoryPage() {
   const handleShareQuiz = async (quiz: QuizItem) => {
     try {
       const quizUrl = `${window.location.origin}/quiz/${quiz.id}`;
+      console.log("🔗 공유하기 클릭됨:", quizUrl);
 
       // 클립보드에 URL 복사
       await navigator.clipboard.writeText(quizUrl);
+      console.log("✅ 클립보드 복사 성공");
+
       showSuccess("링크 복사 완료", "퀴즈 링크가 클립보드에 복사되었습니다!");
+      console.log("📢 Toast 알림 호출됨");
     } catch (error) {
       console.error("클립보드 복사 실패:", error);
       showError(
