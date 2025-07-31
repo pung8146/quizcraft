@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/lib/supabase";
+import { isSupportedFileType, validateFileSize } from "@/lib/documentParser";
 
 interface QuizOptions {
   types: {
@@ -19,6 +20,8 @@ interface QuizOptions {
 export default function HomePage() {
   const [content, setContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string>("");
   const [quizOptions, setQuizOptions] = useState<QuizOptions>({
     types: {
       multipleChoice: true,
@@ -30,6 +33,7 @@ export default function HomePage() {
   });
   const router = useRouter();
   const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // URL 여부를 판단하는 헬퍼 함수
   const isValidUrl = (text: string): boolean => {
@@ -47,10 +51,39 @@ export default function HomePage() {
     }
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 파일 크기 검증 (10MB 제한)
+    if (!validateFileSize(file, 10)) {
+      alert("파일 크기가 너무 큽니다. 10MB 이하의 파일을 업로드해주세요.");
+      return;
+    }
+
+    // 지원하는 파일 형식 검증
+    if (!isSupportedFileType(file)) {
+      alert("지원하지 않는 파일 형식입니다. PDF, DOCX, TXT 파일만 지원합니다.");
+      return;
+    }
+
+    setUploadedFile(file);
+    setUploadedFileName(file.name);
+    setContent(""); // 텍스트 입력 초기화
+  };
+
+  const handleRemoveFile = () => {
+    setUploadedFile(null);
+    setUploadedFileName("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleGenerateQuiz = async () => {
     // 입력 검증
-    if (!content.trim()) {
-      return alert("내용을 입력해주세요.");
+    if (!content.trim() && !uploadedFile) {
+      return alert("내용을 입력하거나 파일을 업로드해주세요.");
     }
 
     // 최소 하나의 문제 유형이 선택되어야 함
@@ -71,7 +104,88 @@ export default function HomePage() {
       let contentToProcess = "";
       let titleToUse = "";
 
-      if (isUrl) {
+      if (uploadedFile) {
+        // 파일 업로드 모드인 경우 파일 분석
+        console.log("📄 파일 업로드 모드로 퀴즈 생성 중...");
+
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        const formData = new FormData();
+        formData.append("file", uploadedFile);
+        formData.append("saveToDatabase", !!user ? "true" : "false");
+        formData.append("quizOptions", JSON.stringify(quizOptions));
+        formData.append("autoGenerateTitle", "true");
+
+        const response = await fetch("/api/upload-document", {
+          method: "POST",
+          headers: {
+            ...(session?.access_token && {
+              Authorization: `Bearer ${session.access_token}`,
+            }),
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "파일 분석에 실패했습니다.");
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.error || "파일 분석에 실패했습니다.");
+        }
+
+        contentToProcess = result.sourceInfo.excerpt || "";
+        titleToUse =
+          result.generatedTitle ||
+          result.sourceInfo.originalTitle ||
+          "문서 퀴즈";
+
+        // 게스트 사용자만 localStorage에 저장
+        if (!user) {
+          localStorage.setItem(
+            `quiz-${slug}`,
+            JSON.stringify({
+              type: "file",
+              fileName: uploadedFileName,
+              content: contentToProcess,
+              sourceInfo: result.sourceInfo,
+            })
+          );
+
+          if (result.data) {
+            localStorage.setItem(
+              `quiz-${slug}-data`,
+              JSON.stringify(result.data)
+            );
+          }
+
+          localStorage.setItem(
+            `quiz-${slug}-meta`,
+            JSON.stringify({
+              createdAt,
+              title: titleToUse,
+              userId: "guest",
+              userEmail: null,
+              isGuest: true,
+              quizOptions,
+              fileName: uploadedFileName,
+              type: "file",
+            })
+          );
+        }
+
+        if (user && result.savedRecord) {
+          router.push(`/quiz/${result.savedRecord.id}`);
+        } else {
+          router.push(`/quiz/${slug}`);
+        }
+        return;
+      } else if (isUrl) {
         // URL 모드인 경우 URL 분석
         console.log("🔍 URL 분석 중...");
 
@@ -245,6 +359,10 @@ export default function HomePage() {
 
   // 입력된 내용이 URL인지 표시하는 헬퍼 함수
   const getInputStatus = () => {
+    if (uploadedFile) {
+      return `📁 파일 업로드됨: ${uploadedFileName} - 문서 내용을 추출하여 퀴즈를 생성합니다`;
+    }
+
     if (!content.trim()) return ``;
 
     const isUrl = isValidUrl(content.trim());
@@ -384,8 +502,67 @@ export default function HomePage() {
               htmlFor="content-input"
               className="block text-sm font-medium text-gray-700 mb-3 sm:mb-4"
             >
-              📄 문서 내용 또는 🔗 URL 입력
+              📄 문서 내용, 🔗 URL, 또는 📁 파일 업로드
             </label>
+
+            {/* 파일 업로드 섹션 */}
+            <div className="mb-4">
+              <div className="flex items-center space-x-4">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.docx,.txt"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  disabled={isGenerating}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isGenerating}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  📁 파일 선택
+                </button>
+                <span className="text-sm text-gray-500">
+                  PDF, DOCX, TXT 파일 지원 (최대 10MB)
+                </span>
+              </div>
+
+              {/* 업로드된 파일 표시 */}
+              {uploadedFile && (
+                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-green-600">📁</span>
+                      <span className="text-sm font-medium text-green-800">
+                        {uploadedFileName}
+                      </span>
+                      <span className="text-xs text-green-600">
+                        ({(uploadedFile.size / 1024 / 1024).toFixed(2)}MB)
+                      </span>
+                    </div>
+                    <button
+                      onClick={handleRemoveFile}
+                      disabled={isGenerating}
+                      className="text-red-500 hover:text-red-700 text-sm font-medium disabled:opacity-50"
+                    >
+                      제거
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 구분선 */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">또는</span>
+              </div>
+            </div>
+
             <textarea
               id="content-input"
               className="w-full h-48 sm:h-64 lg:h-72 border rounded-md p-3 sm:p-4 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 text-left placeholder:text-left"
@@ -402,13 +579,13 @@ https://blog.example.com/post/123
 블로그 포스팅이나 기사 내용을 그대로 복사해서 붙여넣어도 됩니다.`}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              disabled={isGenerating}
+              disabled={isGenerating || !!uploadedFile}
               tabIndex={0}
               aria-label="문서 내용 또는 URL 입력"
             />
 
             {/* URL 감지 시 추가 정보 표시 */}
-            {content.trim() && isValidUrl(content.trim()) && (
+            {content.trim() && isValidUrl(content.trim()) && !uploadedFile && (
               <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-800">
                   <span className="font-medium">🔗 URL이 감지되었습니다!</span>
@@ -428,9 +605,9 @@ https://blog.example.com/post/123
             </div>
             <button
               onClick={handleGenerateQuiz}
-              disabled={!content.trim() || isGenerating}
+              disabled={(!content.trim() && !uploadedFile) || isGenerating}
               className={`order-1 sm:order-2 w-full sm:w-auto px-6 py-3 sm:py-2 rounded-md font-medium transition-colors ${
-                content.trim() && !isGenerating
+                (content.trim() || uploadedFile) && !isGenerating
                   ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
@@ -440,7 +617,9 @@ https://blog.example.com/post/123
               {isGenerating ? (
                 <>
                   <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
-                  {isValidUrl(content.trim())
+                  {uploadedFile
+                    ? "파일 분석 및 퀴즈 생성 중..."
+                    : isValidUrl(content.trim())
                     ? "URL 분석 및 퀴즈 생성 중..."
                     : "퀴즈 생성 중..."}
                 </>
