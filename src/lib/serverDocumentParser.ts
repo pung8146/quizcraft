@@ -36,7 +36,7 @@ export async function parsePdf(buffer: Buffer): Promise<DocumentContent> {
         author: data.info?.Author,
         subject: data.info?.Subject,
         keywords: data.info?.Keywords
-          ? data.info.Keywords.split(",").map((k) => k.trim())
+          ? data.info.Keywords.split(",").map((k: string) => k.trim())
           : undefined,
       },
     };
