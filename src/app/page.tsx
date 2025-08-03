@@ -519,7 +519,7 @@ export default function HomePage() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isGenerating}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   📁 파일 선택
                 </button>
@@ -530,14 +530,14 @@ export default function HomePage() {
 
               {/* 업로드된 파일 표시 */}
               {uploadedFile && (
-                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <span className="text-green-600">📁</span>
-                      <span className="text-sm font-medium text-green-800">
+                      <span className="text-blue-600">📁</span>
+                      <span className="text-sm font-medium text-blue-800">
                         {uploadedFileName}
                       </span>
-                      <span className="text-xs text-green-600">
+                      <span className="text-xs text-blue-600">
                         ({(uploadedFile.size / 1024 / 1024).toFixed(2)}MB)
                       </span>
                     </div>
