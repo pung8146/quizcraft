@@ -595,15 +595,17 @@ https://blog.example.com/post/123
             )}
           </div>
 
-          {/* 하단 정보 및 버튼 */}
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-4 sm:mt-6 space-y-4 sm:space-y-0">
-            <div className="text-sm text-gray-500 order-2 sm:order-1">
+          {/* 하단 정보 */}
+          <div className="mt-4 sm:mt-6">
+            <div className="text-sm text-gray-500 text-center mb-4">
               {getInputStatus()}
             </div>
+
+            {/* AI 퀴즈 생성 버튼 */}
             <button
               onClick={handleGenerateQuiz}
               disabled={(!content.trim() && !uploadedFile) || isGenerating}
-              className={`order-1 sm:order-2 w-full sm:w-auto px-6 py-3 sm:py-2 rounded-md font-medium transition-colors ${
+              className={`w-full px-6 py-3 rounded-md font-medium transition-colors ${
                 (content.trim() || uploadedFile) && !isGenerating
                   ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
