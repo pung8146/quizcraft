@@ -560,10 +560,13 @@ export default function HomePage() {
               </div>
             </div>
 
-            <textarea
-              id="content-input"
-              className="w-full h-48 sm:h-64 lg:h-72 border rounded-md p-3 sm:p-4 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 text-left placeholder:text-left"
-              placeholder={`🔗 웹페이지 URL:
+            {/* textarea는 파일이 업로드되지 않았을 때만 표시 */}
+            {!uploadedFile && (
+              <>
+                <textarea
+                  id="content-input"
+                  className="w-full h-48 sm:h-64 lg:h-72 border rounded-md p-3 sm:p-4 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 text-left placeholder:text-left"
+                  placeholder={`🔗 웹페이지 URL:
 https://example.com/article
 https://blog.example.com/post/123
 
@@ -574,24 +577,28 @@ https://blog.example.com/post/123
 인공지능(AI)은 컴퓨터가 인간의 지능을 모방하여 학습하고 추론하는 기술입니다...
 
 블로그 포스팅이나 기사 내용을 그대로 복사해서 붙여넣어도 됩니다.`}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              disabled={isGenerating || !!uploadedFile}
-              tabIndex={0}
-              aria-label="문서 내용 또는 URL 입력"
-            />
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  disabled={isGenerating}
+                  tabIndex={0}
+                  aria-label="문서 내용 또는 URL 입력"
+                />
 
-            {/* URL 감지 시 추가 정보 표시 */}
-            {content.trim() && isValidUrl(content.trim()) && !uploadedFile && (
-              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                <p className="text-sm text-blue-800">
-                  <span className="font-medium">🔗 URL이 감지되었습니다!</span>
-                  <br />
-                  웹페이지의 본문을 자동으로 추출하여 퀴즈를 생성합니다.
-                  로그인이 필요한 페이지나 동적 콘텐츠는 제대로 추출되지 않을 수
-                  있습니다.
-                </p>
-              </div>
+                {/* URL 감지 시 추가 정보 표시 */}
+                {content.trim() && isValidUrl(content.trim()) && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <p className="text-sm text-blue-800">
+                      <span className="font-medium">
+                        🔗 URL이 감지되었습니다!
+                      </span>
+                      <br />
+                      웹페이지의 본문을 자동으로 추출하여 퀴즈를 생성합니다.
+                      로그인이 필요한 페이지나 동적 콘텐츠는 제대로 추출되지
+                      않을 수 있습니다.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
