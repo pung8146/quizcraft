@@ -20,6 +20,7 @@ interface QuizOptions {
 export default function HomePage() {
   const [content, setContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string>("");
   const [quizOptions, setQuizOptions] = useState<QuizOptions>({
@@ -51,25 +52,41 @@ export default function HomePage() {
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // 파일 크기 검증 (10MB 제한)
-    if (!validateFileSize(file, 10)) {
-      alert("파일 크기가 너무 큽니다. 10MB 이하의 파일을 업로드해주세요.");
-      return;
-    }
+    setIsUploading(true);
 
-    // 지원하는 파일 형식 검증
-    if (!isSupportedFileType(file)) {
-      alert("지원하지 않는 파일 형식입니다. PDF, DOCX, TXT 파일만 지원합니다.");
-      return;
-    }
+    try {
+      // 파일 크기 검증 (10MB 제한)
+      if (!validateFileSize(file, 10)) {
+        alert("파일 크기가 너무 큽니다. 10MB 이하의 파일을 업로드해주세요.");
+        return;
+      }
 
-    setUploadedFile(file);
-    setUploadedFileName(file.name);
-    setContent(""); // 텍스트 입력 초기화
+      // 지원하는 파일 형식 검증
+      if (!isSupportedFileType(file)) {
+        alert(
+          "지원하지 않는 파일 형식입니다. PDF, DOCX, TXT 파일만 지원합니다."
+        );
+        return;
+      }
+
+      // 파일 처리 시뮬레이션 (실제로는 즉시 처리되지만 사용자 경험을 위해 약간의 지연)
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      setUploadedFile(file);
+      setUploadedFileName(file.name);
+      setContent(""); // 텍스트 입력 초기화
+    } catch (error) {
+      console.error("파일 업로드 중 오류:", error);
+      alert("파일 업로드 중 오류가 발생했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleRemoveFile = () => {
@@ -514,22 +531,41 @@ export default function HomePage() {
                   accept=".pdf,.docx,.txt"
                   onChange={handleFileUpload}
                   className="hidden"
-                  disabled={isGenerating}
+                  disabled={isGenerating || isUploading}
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isGenerating}
+                  disabled={isGenerating || isUploading}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  📁 파일 선택
+                  {isUploading ? (
+                    <>
+                      <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                      업로드 중...
+                    </>
+                  ) : (
+                    "📁 파일 선택"
+                  )}
                 </button>
                 <span className="text-sm text-gray-500">
                   PDF, DOCX, TXT 파일 지원 (최대 10MB)
                 </span>
               </div>
 
+              {/* 업로드 중 로딩 표시 */}
+              {isUploading && (
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="flex items-center space-x-2">
+                    <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></span>
+                    <span className="text-sm text-blue-800">
+                      파일을 처리하고 있습니다...
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* 업로드된 파일 표시 */}
-              {uploadedFile && (
+              {uploadedFile && !isUploading && (
                 <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
@@ -543,7 +579,7 @@ export default function HomePage() {
                     </div>
                     <button
                       onClick={handleRemoveFile}
-                      disabled={isGenerating}
+                      disabled={isGenerating || isUploading}
                       className="text-red-500 hover:text-red-700 text-sm font-medium disabled:opacity-50"
                     >
                       제거
@@ -579,7 +615,7 @@ https://blog.example.com/post/123
 블로그 포스팅이나 기사 내용을 그대로 복사해서 붙여넣어도 됩니다.`}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  disabled={isGenerating}
+                  disabled={isGenerating || isUploading}
                   tabIndex={0}
                   aria-label="문서 내용 또는 URL 입력"
                 />
@@ -611,19 +647,27 @@ https://blog.example.com/post/123
             {/* AI 퀴즈 생성 버튼 */}
             <button
               onClick={handleGenerateQuiz}
-              disabled={(!content.trim() && !uploadedFile) || isGenerating}
+              disabled={
+                (!content.trim() && !uploadedFile) ||
+                isGenerating ||
+                isUploading
+              }
               className={`w-full px-6 py-3 rounded-md font-medium transition-colors ${
-                (content.trim() || uploadedFile) && !isGenerating
+                (content.trim() || uploadedFile) &&
+                !isGenerating &&
+                !isUploading
                   ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
               tabIndex={0}
               aria-label="AI 퀴즈 생성"
             >
-              {isGenerating ? (
+              {isGenerating || isUploading ? (
                 <>
                   <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
-                  {uploadedFile
+                  {isUploading
+                    ? "파일 업로드 중..."
+                    : uploadedFile
                     ? "파일 분석 및 퀴즈 생성 중..."
                     : isValidUrl(content.trim())
                     ? "URL 분석 및 퀴즈 생성 중..."
