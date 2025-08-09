@@ -103,6 +103,11 @@ export default function HomePage() {
       return alert("내용을 입력하거나 파일을 업로드해주세요.");
     }
 
+    // 텍스트 입력 시 최소 10글자 검증
+    if (content.trim() && content.trim().length < 10) {
+      return alert("텍스트는 최소 10글자 이상 입력해주세요.");
+    }
+
     // 최소 하나의 문제 유형이 선택되어야 함
     const selectedTypes = Object.values(quizOptions.types).some(Boolean);
     if (!selectedTypes) {
@@ -386,7 +391,12 @@ export default function HomePage() {
     if (isUrl) {
       return "🔗 URL이 감지되었습니다 - 웹페이지 내용을 추출하여 퀴즈를 생성합니다";
     } else {
-      return `📄 텍스트 내용 (${content.length}자) - 입력된 텍스트로 퀴즈를 생성합니다`;
+      const charCount = content.trim().length;
+      const status =
+        charCount >= 10
+          ? `📄 텍스트 내용 (${charCount}자) - 입력된 텍스트로 퀴즈를 생성합니다`
+          : `📄 텍스트 내용 (${charCount}/10자) - 최소 10글자 이상 입력해주세요`;
+      return status;
     }
   };
 
@@ -601,7 +611,11 @@ export default function HomePage() {
               <>
                 <textarea
                   id="content-input"
-                  className="w-full h-48 sm:h-64 lg:h-72 border rounded-md p-3 sm:p-4 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 text-left placeholder:text-left"
+                  className={`w-full h-48 sm:h-64 lg:h-72 border rounded-md p-3 sm:p-4 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 text-left placeholder:text-left ${
+                    content.trim().length > 0 && content.trim().length < 10
+                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                      : ""
+                  }`}
                   placeholder={`🔗 웹페이지 URL:
 https://example.com/article
 https://blog.example.com/post/123
@@ -619,6 +633,28 @@ https://blog.example.com/post/123
                   tabIndex={0}
                   aria-label="문서 내용 또는 URL 입력"
                 />
+
+                {/* 글자 수 표시 및 경고 메시지 */}
+                {content.trim().length > 0 && (
+                  <div className="mt-2 flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span
+                        className={`text-sm ${
+                          content.trim().length < 10
+                            ? "text-red-500"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {content.trim().length} / 10 글자
+                      </span>
+                      {content.trim().length < 10 && (
+                        <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded">
+                          최소 10글자 이상 입력해주세요
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* URL 감지 시 추가 정보 표시 */}
                 {content.trim() && isValidUrl(content.trim()) && (
@@ -649,11 +685,13 @@ https://blog.example.com/post/123
               onClick={handleGenerateQuiz}
               disabled={
                 (!content.trim() && !uploadedFile) ||
+                (content.trim() && content.trim().length < 10) ||
                 isGenerating ||
                 isUploading
               }
               className={`w-full px-6 py-3 rounded-md font-medium transition-colors ${
-                (content.trim() || uploadedFile) &&
+                ((content.trim() && content.trim().length >= 10) ||
+                  uploadedFile) &&
                 !isGenerating &&
                 !isUploading
                   ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
