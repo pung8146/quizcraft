@@ -793,9 +793,21 @@ export default function QuizPage() {
               </button>
               <button
                 className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                onClick={() => {
-                  const url = window.location.href;
-                  navigator.clipboard.writeText(url);
+                onClick={async () => {
+                  try {
+                    const url = window.location.href;
+                    await navigator.clipboard.writeText(url);
+                    showSuccess(
+                      "링크 복사 완료",
+                      "퀴즈 링크가 클립보드에 복사되었습니다!"
+                    );
+                  } catch (error) {
+                    console.error("클립보드 복사 실패:", error);
+                    showError(
+                      "복사 실패",
+                      "링크 복사에 실패했습니다. 수동으로 복사해주세요."
+                    );
+                  }
                 }}
               >
                 공유하기
