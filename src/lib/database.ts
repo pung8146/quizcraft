@@ -448,3 +448,34 @@ export async function getFavoriteQuizCount(
     };
   }
 }
+
+/**
+ * 공개 퀴즈 기록 조회 (ID로)
+ */
+export async function getPublicQuizRecord(
+  quizId: string
+): Promise<{ data: QuizRecord | null; error: string | null }> {
+  try {
+    const { data, error } = await supabase
+      .from("quiz_records")
+      .select("*")
+      .eq("id", quizId)
+      .single();
+
+    if (error) {
+      console.error("공개 퀴즈 기록 조회 오류:", error);
+      return { data: null, error: error.message };
+    }
+
+    return { data: data as QuizRecord, error: null };
+  } catch (error) {
+    console.error("공개 퀴즈 기록 조회 중 예외 발생:", error);
+    return {
+      data: null,
+      error:
+        error instanceof Error
+          ? error.message
+          : "알 수 없는 오류가 발생했습니다.",
+    };
+  }
+}

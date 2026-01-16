@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { GeneratedQuiz, QuizQuestion } from "@/lib/openai";
 import { supabase } from "@/lib/supabase";
-import { getQuizRecord } from "@/lib/database";
+import { getQuizRecord, getPublicQuizRecord } from "@/lib/database";
 import { useAuth } from "@/components/AuthProvider";
 import { useToastHelpers } from "@/hooks/useToast";
 
@@ -142,7 +142,7 @@ export default function QuizPage() {
   const loadQuizContent = async () => {
     try {
       if (user) {
-        // 로그인한 사용자: 데이터베이스에서만 퀴즈 로드 (localStorage 사용 안함)
+        // 로그인한 사용자: 먼저 자신의 퀴즈에서 찾고, 없으면 공개 퀴즈에서 찾기
         console.log("🔍 데이터베이스에서 퀴즈 검색 중...", slug);
         const { data: dbQuiz, error: dbError } = await getQuizRecord(
           slug,
@@ -150,26 +150,37 @@ export default function QuizPage() {
         );
 
         if (!dbError && dbQuiz) {
-          console.log("✅ 데이터베이스에서 퀴즈 발견:", dbQuiz.title);
+          console.log("✅ 사용자 퀴즈에서 발견:", dbQuiz.title);
           setQuizData(dbQuiz.generated_quiz);
           setIsLoading(false);
           return;
         } else {
-          console.log("❌ 데이터베이스에서 퀴즈를 찾을 수 없음:", dbError);
-          // UUID 형식이 아닌 경우 다른 방법으로 시도
-          if (
-            dbError &&
-            dbError.includes("invalid input syntax for type uuid")
-          ) {
-            console.log("⚠️ UUID 형식이 아닌 ID, 다른 방법으로 조회 시도...");
-            // 여기서 다른 조회 방법을 시도할 수 있습니다
+          console.log("❌ 사용자 퀴즈에서 찾을 수 없음, 공개 퀴즈에서 검색...");
+          // 공개 퀴즈에서 찾기
+          const { data: publicQuiz, error: publicError } = await getPublicQuizRecord(slug);
+          
+          if (!publicError && publicQuiz) {
+            console.log("✅ 공개 퀴즈에서 발견:", publicQuiz.title);
+            setQuizData(publicQuiz.generated_quiz);
+            setIsLoading(false);
+            return;
+          } else {
+            console.log("❌ 공개 퀴즈에서도 찾을 수 없음:", publicError);
+            // UUID 형식이 아닌 경우 다른 방법으로 시도
+            if (
+              (dbError && dbError.includes("invalid input syntax for type uuid")) ||
+              (publicError && publicError.includes("invalid input syntax for type uuid"))
+            ) {
+              console.log("⚠️ UUID 형식이 아닌 ID, 다른 방법으로 조회 시도...");
+              // 여기서 다른 조회 방법을 시도할 수 있습니다
+            }
+            setError(
+              "퀴즈를 찾을 수 없습니다. 삭제되었거나 존재하지 않을 수 있습니다."
+            );
           }
-          setError(
-            "퀴즈를 찾을 수 없습니다. 삭제되었거나 존재하지 않을 수 있습니다."
-          );
         }
       } else {
-        // 게스트 사용자: localStorage에서만 퀴즈 로드
+        // 게스트 사용자: localStorage에서 먼저 찾고, 없으면 공개 퀴즈에서 찾기
         console.log("🔍 게스트 모드: localStorage에서 퀴즈 검색 중...", slug);
 
         // 1. 기존에 생성된 퀴즈가 있는지 확인
@@ -192,7 +203,18 @@ export default function QuizPage() {
           return;
         }
 
-        // 3. 어디에서도 찾을 수 없으면 오류 표시
+        // 3. 공개 퀴즈에서 찾기
+        console.log("🔍 게스트 모드: 공개 퀴즈에서 검색 중...", slug);
+        const { data: publicQuiz, error: publicError } = await getPublicQuizRecord(slug);
+        
+        if (!publicError && publicQuiz) {
+          console.log("✅ 공개 퀴즈에서 발견:", publicQuiz.title);
+          setQuizData(publicQuiz.generated_quiz);
+          setIsLoading(false);
+          return;
+        }
+
+        // 4. 어디에서도 찾을 수 없으면 오류 표시
         setError(
           "퀴즈를 찾을 수 없습니다. 삭제되었거나 존재하지 않을 수 있습니다."
         );
@@ -560,7 +582,14 @@ export default function QuizPage() {
         if (!session?.access_token) return;
 
         // 퀴즈 기록 ID를 가져오기 위해 데이터베이스에서 조회
-        const { data: quizRecord } = await getQuizRecord(slug, user.id);
+        let { data: quizRecord } = await getQuizRecord(slug, user.id);
+        
+        // 사용자 퀴즈에서 찾을 수 없으면 공개 퀴즈에서 찾기
+        if (!quizRecord) {
+          const { data: publicQuiz } = await getPublicQuizRecord(slug);
+          quizRecord = publicQuiz;
+        }
+        
         const quizRecordId = quizRecord?.id;
 
         if (!quizRecordId) {
