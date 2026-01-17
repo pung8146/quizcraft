@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { nanoid } from "nanoid";
 import { useAuth } from "@/components/AuthProvider";
@@ -15,6 +15,13 @@ interface QuizOptions {
     sentenceCompletion: boolean;
   };
   questionCount: number;
+}
+
+interface RecentQuiz {
+  id: string;
+  title: string;
+  createdAt: string;
+  type?: string;
 }
 
 export default function HomePage() {
@@ -32,9 +39,63 @@ export default function HomePage() {
     },
     questionCount: 5,
   });
+  const [recentQuizzes, setRecentQuizzes] = useState<RecentQuiz[]>([]);
   const router = useRouter();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 최근 퀴즈 불러오기
+  useEffect(() => {
+    const loadRecentQuizzes = async () => {
+      if (user) {
+        // 로그인한 사용자: DB에서 가져오기
+        const { data, error } = await supabase
+          .from("quizzes")
+          .select("id, title, created_at, type")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(3);
+
+        if (!error && data) {
+          setRecentQuizzes(
+            data.map((quiz) => ({
+              id: quiz.id,
+              title: quiz.title,
+              createdAt: quiz.created_at,
+              type: quiz.type,
+            }))
+          );
+        }
+      } else {
+        // 게스트 사용자: localStorage에서 가져오기
+        const quizKeys = Object.keys(localStorage)
+          .filter((key) => key.endsWith("-meta"))
+          .map((key) => {
+            try {
+              const meta = JSON.parse(localStorage.getItem(key) || "{}");
+              return {
+                id: key.replace("quiz-", "").replace("-meta", ""),
+                title: meta.title || "제목 없음",
+                createdAt: meta.createdAt || new Date().toISOString(),
+                type: meta.type,
+              };
+            } catch {
+              return null;
+            }
+          })
+          .filter(Boolean) as RecentQuiz[];
+
+        // 날짜순으로 정렬하고 최근 3개만 가져오기
+        quizKeys.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        setRecentQuizzes(quizKeys.slice(0, 3));
+      }
+    };
+
+    loadRecentQuizzes();
+  }, [user]);
 
   // URL 여부를 판단하는 헬퍼 함수
   const isValidUrl = (text: string): boolean => {
@@ -717,6 +778,65 @@ https://blog.example.com/post/123
             </button>
           </div>
         </div>
+
+        {/* 최근 퀴즈 - 하단 */}
+        {recentQuizzes.length > 0 && (
+          <div className="bg-white rounded-lg border shadow-sm p-4 sm:p-6 mb-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              📚 최근 퀴즈
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {recentQuizzes.map((quiz) => (
+                <button
+                  key={quiz.id}
+                  onClick={() => router.push(`/quiz/${quiz.id}`)}
+                  className="text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 group"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                        {quiz.title}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="text-xs text-gray-500">
+                          {new Date(quiz.createdAt).toLocaleDateString(
+                            "ko-KR",
+                            {
+                              month: "short",
+                              day: "numeric",
+                            }
+                          )}
+                        </span>
+                        {quiz.type && (
+                          <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">
+                            {quiz.type === "url"
+                              ? "URL"
+                              : quiz.type === "file"
+                              ? "파일"
+                              : "텍스트"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <svg
+                      className="w-4 h-4 text-gray-400 flex-shrink-0 group-hover:text-blue-600 transition-colors"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
